@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.stats.dao.StatRelatedDao">
+	
+	<select id="statsNew" resultType="StatRelated">
+		select 
+		DATE_FORMAT(CONCAT(a.`timeframe`,'0000'),'${timeFt}') AS timeframes,
+		ckAppId,
+		childCkAppId,
+		ckChannelId,
+		childChannelId,
+		SUM(newNum) as newNum
+		from count_new_device a 
+		where a.timeframe>='${startTime}' and a.timeframe<![CDATA[<=]]>'${endTime}'
+		<if test="ckAppId != null and ckAppId != ''">
+			and ckAppId = #{ckAppId}
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			and childCkAppId = #{childCkAppId}
+		</if>
+		<if test="ckChannelId != null and ckChannelId != ''">
+			and ckChannelId = #{ckChannelId}
+		</if>
+		<if test="childChannelId != null and childChannelId != ''">
+			and childChannelId = #{childChannelId}
+		</if>
+		<if test="groupBy != null and groupBy != ''">
+			group by ${groupBy}
+		</if>
+	</select>
+	
+	
+	
+	<select id="statsNewDevice" resultType="StatRelated">
+		SELECT
+			id,
+			DATE_FORMAT(CONCAT(a.`timeframe`,'0000'),'${timeFt}') AS timeframes,
+			ckAppId,
+			childCkAppId,
+			ckChannelId,
+			childChannelId,
+			SUM(newNum) as newNum
+		FROM
+			count_new_device a
+		WHERE
+			a.timeframe <![CDATA[>=]]> #{startTime}
+		AND a.timeframe <![CDATA[<=]]> #{endTime}
+			<if test="ckAppId != null and ckAppId != ''">
+				and ckAppid=#{ckAppId}
+			</if>
+			<if test="childCkAppId != null and childCkAppId != ''">
+				and childCkAppId=#{childCkAppId}
+			</if>
+			<if test="ckChannelId != null and ckChannelId != ''">
+				AND ckChannelId = #{ckChannelId}
+			</if>
+		<if test="groupBy != null and groupBy != ''">
+			group by ${groupBy}
+		</if>
+	</select>
+	
+	<!-- 设备活跃 -->
+	<select id="statsAct" resultType="StatRelated">
+		select 
+		DATE_FORMAT(CONCAT(a.`timeframe`,'${addStr}'),'${timeFt}') AS timeframes,
+		ckAppId,
+		childCkAppId,
+		ckChannelId,
+		childChannelId,
+		SUM(actNum) as actNum
+		from count_act_device a 
+		where a.timeframe>='${startTime}' and a.timeframe<![CDATA[<=]]>'${endTime}' and length(a.timeframe)=${length} 
+		<if test="ckAppId != null and ckAppId != ''">
+			and ckAppId = #{ckAppId}
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			and childCkAppId = #{childCkAppId}
+		</if>
+		<if test="ckChannelId != null and ckChannelId != ''">
+			and ckChannelId = #{ckChannelId}
+		</if>
+		<if test="childChannelId != null and childChannelId != ''">
+			and childChannelId = #{childChannelId}
+		</if>
+		<if test="groupBy != null and groupBy != ''">
+			group by ${groupBy}
+		</if>
+	</select>
+	
+</mapper>

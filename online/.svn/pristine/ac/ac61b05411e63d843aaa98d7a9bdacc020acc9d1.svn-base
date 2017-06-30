@@ -1,0 +1,122 @@
+package me.ckhd.opengame.app.entity;
+
+import org.hibernate.validator.constraints.Length;
+
+import me.ckhd.opengame.common.persistence.DataEntity;
+/**
+ * APP  Entity
+ * @author wesley
+ * @version 2015-07-01
+ */
+public class APPCk extends  DataEntity<APPCk>{
+ 
+	private static final long serialVersionUID = 1L;
+	/**
+	 * APP 's  ckappId.
+	 */
+	private String ckappId;
+	private String childId;
+	/**
+	 * APP 's  NAME.
+	 */
+	private String name;
+	
+	private String childName;//子游戏名字
+	
+	/**
+	 * 开发商ID
+	 */
+	private String cpid;
+	/**
+	 * 开发商名称 
+	 */
+	private String cpname;
+	
+	/**
+	 * 修改前名称
+	 */
+	private String oldName;
+	/**
+	 * 修改前id
+	 */
+	private String oldAppId;
+	
+	
+	private double discount=1; //折扣率
+	
+	private String payCallbackUrl; //cp服务器地址
+	
+	private String secretKey;//密钥
+	
+	@Length(min=1,max=45,message="应用名称的长度必须介于 1 和 45 之间")
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	@Length(min=0,max=64,message="应用ID的长度必须介于 1 和 64 之间")
+	public String getCkappId() {
+		return ckappId;
+	}
+	public void setCkappId(String ckappId) {
+		this.ckappId = ckappId;
+	}
+	public String getCpid() {
+		return cpid;
+	}
+	public void setCpid(String cpid) {
+		this.cpid = cpid;
+	}
+	public String getCpname() {
+		return cpname;
+	}
+	public void setCpname(String cpname) {
+		this.cpname = cpname;
+	}
+	public String getOldName() {
+		return oldName;
+	}
+	public void setOldName(String oldName) {
+		this.oldName = oldName;
+	}
+	public String getOldAppId() {
+		return oldAppId;
+	}
+	public void setOldAppId(String oldAppId) {
+		this.oldAppId = oldAppId;
+	}
+	public double getDiscount() {
+		return discount;
+	}
+	public void setDiscount(double discount) {
+		this.discount = discount;
+	}
+	public String getPayCallbackUrl() {
+		return payCallbackUrl;
+	}
+	public void setPayCallbackUrl(String payCallbackUrl) {
+		this.payCallbackUrl = payCallbackUrl;
+	}
+	public String getSecretKey() {
+		return secretKey;
+	}
+	public void setSecretKey(String secretKey) {
+		this.secretKey = secretKey;
+	}
+	public String getChildId() {
+		return childId;
+	}
+	public void setChildId(String childId) {
+		this.childId = childId;
+	}
+	
+	public String getChildName() {
+		return childName;
+	}
+	
+	public void setChildName(String childName) {
+		this.childName = childName;
+	}
+
+}

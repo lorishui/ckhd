@@ -1,0 +1,85 @@
+package me.ckhd.opengame.online.handle;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.common.config.Global;
+import me.ckhd.opengame.common.utils.CoderUtils;
+import me.ckhd.opengame.common.utils.SignContext;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.entity.OnlineUser;
+
+import org.apache.commons.lang.math.RandomUtils;
+import org.springframework.stereotype.Component;
+
+import com.alibaba.fastjson.JSONObject;
+
+@Component("wft")
+public class wftHandle extends BaseHandle{
+	
+	@Override
+	public String login(OnlineUser onlineUser, JSONObject codeJson,
+			PayInfoConfig payInfo) {
+		return null;
+	}
+
+	@Override
+	public String pay(OnlinePay onlinePay, JSONObject codeJson) {
+		String key = Global.getConfig("WFT_KEY");
+		String appid = Global.getConfig("WFT_APPID");
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("service","unified.trade.pay");//接口类型
+		map.put("version", "1.0");//版本号
+		map.put("sign_type", "MD5");
+		map.put("charset", "UTF-8");
+		map.put("mch_id", appid);//商户号，由威富通分配
+		map.put("out_trade_no", onlinePay.getOrderId());//商户系统内部的订单号
+		map.put("body", onlinePay.getPayCodeConfig().getProductName());//商品描述
+		map.put("total_fee", onlinePay.getPrices());//总金额
+		map.put("mch_create_ip", StringUtils.getRemoteAddr(onlinePay.getHttpServletRequest()));//订单生成的机器 IP
+		map.put("notify_url", Global.getConfig("WFT_NOTIFY_URL")+onlinePay.getCkAppId()+"/"+onlinePay.getChannelId());//回掉地址
+		map.put("nonce_str",getRandomStr());
+		map.put("sign_type", "MD5");
+		log.info("加密串："+SignContext.getSignContext(map)+"&key="+key);
+		map.put("sign",CoderUtils.md5(SignContext.getSignContext(map)+"&key="+key,"utf-8"));
+		log.info("加密密文："+map.get("sign"));
+		return super.pay(onlinePay, codeJson);
+	}
+	
+	private String getRandomStr(){
+		String charStr = "012356789abcdefghijklmnopqrstuvwsyzABCDEFGHIJKLMNOPQRSTUVWSYZ";
+		StringBuffer sb = new StringBuffer();
+		for(int i=0;i<16;i++){
+			sb.append(charStr.charAt(RandomUtils.nextInt(61)));
+		}
+		return sb.toString();
+	}
+	
+	@Override
+	public void parseParamter(String code, HttpServletRequest request,
+			OnlinePay onlinePay) {
+		
+	}
+
+	@Override
+	public String verifyData(OnlinePay onlinePay, JSONObject result,
+			HttpServletResponse response) {
+		return null;
+	}
+
+	@Override
+	public String getReturnSuccess() {
+		return null;
+	}
+
+	@Override
+	public String getReturnFailure() {
+		return null;
+	}
+	
+}

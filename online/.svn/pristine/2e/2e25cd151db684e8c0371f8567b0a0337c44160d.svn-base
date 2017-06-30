@@ -1,0 +1,58 @@
+package me.ckhd.opengame.stats.entity;
+
+import me.ckhd.opengame.common.persistence.DataEntity;
+
+/**
+ * 统计相关
+ * @author ASUS
+ *
+ */
+public class StatRelated extends DataEntity<StatRelated>{
+
+	private static final long serialVersionUID = -218121959171913440L;
+	
+	private String timeframe;
+	private String ckAppId; 
+	private String childCkAppId;
+	private String ckChannelId; 
+	private String childChannelId; 
+	private int newNum;
+	
+	public String getTimeframe() {
+		return timeframe;
+	}
+	public void setTimeframe(String timeframe) {
+		this.timeframe = timeframe;
+	}
+	public String getCkAppId() {
+		return ckAppId;
+	}
+	public void setCkAppId(String ckAppId) {
+		this.ckAppId = ckAppId;
+	}
+	public String getChildCkAppId() {
+		return childCkAppId;
+	}
+	public void setChildCkAppId(String childCkAppId) {
+		this.childCkAppId = childCkAppId;
+	}
+	public String getCkChannelId() {
+		return ckChannelId;
+	}
+	public void setCkChannelId(String ckChannelId) {
+		this.ckChannelId = ckChannelId;
+	}
+	public String getChildChannelId() {
+		return childChannelId;
+	}
+	public void setChildChannelId(String childChannelId) {
+		this.childChannelId = childChannelId;
+	}
+	public int getNewNum() {
+		return newNum;
+	}
+	public void setNewNum(int newNum) {
+		this.newNum = newNum;
+	}
+
+}

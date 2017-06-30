@@ -1,0 +1,218 @@
+#============================#
+#===== Database settings =====#
+#============================#
+ 
+
+#mysql database setting
+jdbc.type=mysql
+jdbc.driver=com.mysql.jdbc.Driver
+#jdbc.url=jdbc:mysql://192.168.1.12:3306/open_game?useUnicode=true&characterEncoding=utf-8
+jdbc.url=jdbc:mysql://localhost:3306/online?useUnicode=true&characterEncoding=utf-8
+jdbc.username=root
+#jdbc.password=abner
+jdbc.password=root
+#jdbc.url=jdbc:mysql://localhost:3306/open_game?useUnicode=true&characterEncoding=utf-8
+#jdbc.username=root
+#jdbc.password=root
+#jdbc.url=jdbc:mysql://rdsco12lf527s0h5i9bwuo.mysql.rds.aliyuncs.com:3306/study?useUnicode=true&characterEncoding=utf-8
+#jdbc.username=study
+#jdbc.password=study1
+
+#======================================
+#======user Database settings==========
+#======================================
+jdbc.user.type=mysql
+jdbc.user.driver=com.mysql.jdbc.Driver
+jdbc.user.url=jdbc:mysql://localhost:3306/user?useUnicode=true&characterEncoding=utf-8
+jdbc.user.username=root
+jdbc.user.password=root
+ 
+
+#pool settings
+jdbc.pool.init=1
+jdbc.pool.minIdle=3
+jdbc.pool.maxActive=20
+
+#jdbc.testSql=SELECT 'x'
+jdbc.testSql=SELECT 'x' FROM DUAL
+
+#redis settings
+redis.keyPrefix=OpenGame
+redis.host=127.0.0.1
+redis.port=6379
+
+#============================#
+#===== System settings ======#
+#============================#
+
+#\u4ea7\u54c1\u4fe1\u606f\u8bbe\u7f6e
+productName=OpenGame \u9ad8\u6548\u8fd0\u8425\u5e73\u53f0
+copyrightYear=2017
+version=V1.0
+
+#\u6f14\u793a\u6a21\u5f0f: \u4e0d\u80fd\u64cd\u4f5c\u548c\u4fdd\u5b58\u7684\u6a21\u5757\uff1a sys: area/office/user/role/menu/dict, cms: site/category
+demoMode=false
+
+#\u7ba1\u7406\u57fa\u7840\u8def\u5f84, \u9700\u540c\u6b65\u4fee\u6539\uff1aweb.xml
+adminPath=/ck
+
+#\u524d\u7aef\u57fa\u7840\u8def\u5f84
+frontPath=/f
+
+#\u7f51\u7ad9URL\u540e\u7f00
+urlSuffix=.html
+
+#\u662f\u5426\u4e0d\u5141\u8bb8\u5237\u65b0\u4e3b\u9875\uff0c\u4e0d\u5141\u8bb8\u60c5\u51b5\u4e0b\uff0c\u5237\u65b0\u4e3b\u9875\u4f1a\u5bfc\u81f4\u91cd\u65b0\u767b\u5f55
+notAllowRefreshIndex=false
+
+#\u662f\u5426\u5141\u8bb8\u591a\u8d26\u53f7\u540c\u65f6\u767b\u5f55
+user.multiAccountLogin=true
+
+#\u5206\u9875\u914d\u7f6e
+page.pageSize=30
+
+#\u7855\u6b63\u7ec4\u4ef6\u662f\u5426\u4f7f\u7528\u7f13\u5b58
+supcan.useCache=false
+
+#\u901a\u77e5\u95f4\u9694\u65f6\u95f4\u8bbe\u7f6e, \u5355\u4f4d\uff1a\u6beb\u79d2, 30s=30000ms, 60s=60000ms
+oa.notify.remind.interval=60000
+
+#============================#
+#==== Framework settings ====#
+#============================#
+
+#\u4f1a\u8bdd\u8d85\u65f6\uff0c \u5355\u4f4d\uff1a\u6beb\u79d2\uff0c 20m=1200000ms, 30m=1800000ms, 60m=3600000ms
+session.sessionTimeout=1800000
+#\u4f1a\u8bdd\u6e05\u7406\u95f4\u9694\u65f6\u95f4\uff0c \u5355\u4f4d\uff1a\u6beb\u79d2\uff0c2m=120000ms\u3002
+session.sessionTimeoutClean=120000
+
+#\u7f13\u5b58\u8bbe\u7f6e
+ehcache.configFile=cache/ehcache-local.xml
+#ehcache.configFile=cache/ehcache-rmi.xml
+
+#\u7d22\u5f15\u9875\u8def\u5f84
+web.view.index=/a
+
+#\u89c6\u56fe\u6587\u4ef6\u5b58\u653e\u8def\u5f84
+web.view.prefix=/WEB-INF/views/
+web.view.suffix=.jsp
+
+#\u6700\u5927\u6587\u4ef6\u4e0a\u4f20\u9650\u5236\uff0c\u5355\u4f4d\u5b57\u8282. 10M=10*1024*1024(B)=10485760 bytes\uff0c\u9700\u540c\u6b65\u4fee\u6539\uff1ackfinder.xml
+web.maxUploadSize=10485760
+
+
+
+#\u9759\u6001\u6587\u4ef6\u540e\u7f00
+web.staticFile=.css,.js,.png,.jpg,.gif,.jpeg,.bmp,.ico,.swf,.psd,.htc,.htm,.html,.crx,.xpi,.exe,.ipa,.apk
+
+#\u5355\u70b9\u767b\u5f55CAS\u8bbe\u7f6e
+cas.server.url=http://127.0.0.1:8180/cas
+cas.project.url=http://127.0.0.1:8080/opengame
+
+#this ip start SendOrderSchedule
+#send.order.schedule.serverIp=192.168.0.65
+send.order.schedule.serverIp=192.168.0.57
+send.order.schedule.periodTime=5
+#new add
+count.serverIp=192.168.1.57
+
+
+#============================#
+#===== DRDS settings =====#
+#============================#
+
+#DRDS database setting
+drds.jdbc.type=mysql
+drds.jdbc.driver=com.mysql.jdbc.Driver
+#drds.jdbc.url=jdbc:mysql://devmac:3306/open_game?useUnicode=true&characterEncoding=utf-8
+drds.jdbc.url=jdbc:mysql://localhost:3306/open_game?useUnicode=true&characterEncoding=utf-8
+drds.jdbc.username=root
+#drds.jdbc.password=abner
+drds.jdbc.password=root
+
+
+#============================#
+#===== oppo  setting =====#
+#============================#
+
+#oppo PUBLIC_KEY
+OPPO_PUBLIC_KEY = MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmreYIkPwVovKR8rLHWlFVw7YDfm9uQOJKL89Smt6ypXGVdrAKKl0wNYc3/jecAoPi2ylChfa2iRu5gunJyNmpWZzlCNRIau55fxGW0XEu553IiprOZcaw5OuYGlf60ga8QT6qToP0/dpiL/ZbmNUO9kUhosIjEu22uFgR+5cYyQIDAQAB
+
+
+
+#============================#
+#=====ALIPAY setting =====#
+#============================#
+
+#Alipay PUBLIC_KEY
+ALIPAY_PUBLIC_KEY = MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCnxj/9qwVfgoUh/y2W89L6BkRAFljhNhgPdyPuBV64bfQNN1PjbCzkIM6qRdKBoLPXmKKMiFYnkd6rAoprih3/PrQEB/VsW8OoM8fxn67UDYuyBTqA23MML9q1+ilIZwBC2AQ2UBVOrFXfFl75p6/B5KsiNG9zpgmLCUYuLkxpLQIDAQAB
+ALIPAY_PARTNER = 2088601048948103
+ALIPAY_SELLER = szckhd@163.com
+ALIPAY_RSA_PRIVATE = MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBALt5gpRjCuSGwY6kRHskZiM5TQBVt9q+DgxooBfWKzc9+yJK8SJbrNTkBYGnd01zuqD4pwT2QTzZ8fIqK4XUi3phRl1tg4QGV87EH+A8CkaW7YjrQN7NWvTyOhiJy2Au15e5AW5GDLPxFA9BZTv8t4BOeLxicGal4UEbAuwy3SFrAgMBAAECgYEAjI4iT3weG43IqlgQG78DcJ8yUvDxQefCAp2igZyJlAY9Nc24Eglnf8lhM37J3GDK6IrkNb0m1ieU1Pm23cSnuJMl1RNwY2HalQS195BFhAvPOiPeSwMz10d5Ck3yVkQ7hmI/FAioqsWd6lR0ogav2DpKZPHpLy+mAyakP0S/gxkCQQD3l+8kjNh/bk94MQpBwVt+1GwiPZMl9cvOON6Tzq5tG1wPQ3Q42p3QjtUMKbWW6v7UveM2nXO1VIpy5qYKeCg9AkEAwdcG6h2nN4qEY/5RpkAJ4mP+JixMxtV5HAAXfZ6DzOgquzboYqYNJ1jqWwBAgdnUGjLk0cgjL7YKlVYUurDixwJBAIE0cD+KoJAfaKk4LjoSRUTyZVuY9mkg07JSSxSnDq8xT+FHOidRLnnfj55BRdnz1/f8/81IbVF7RKShaJSeD6ECQFQxAfbTtFpiVohb4LjV3bUv+yY3XY2LENRBkfJk1Bg+yriP67VVLCdn7jpiTKJZq09Jxar8Q5QofEZKoixIQecCQQCEgF67A7+RH87xRxbyeBQDyL6f2iSxatDDCQmSW7N0tHlfPEEXkRWAGgyN+C3yFe1v+u4IKnzlgjNoU5DNXcos
+ALIPAY_NOTIFYURL = http://154v61q180.imwork.net/ck/online/channel/payCallBack/alipay
+
+#============================#
+#=====unionpay setting =====#
+#============================#
+#UNIONPAY_MERID=777290058110097
+UNIONPAY_MERID=802440379930628
+#\u83b7\u53d6tn\u53f7\u4ea4\u6613\u5730\u5740
+#acpsdk.appTransUrl=https://101.231.204.80:5000/gateway/api/appTransReq.do
+acpsdk.appTransUrl=https://gateway.95516.com/gateway/api/appTransReq.do
+#########################\u5165\u7f51\u6d4b\u8bd5\u73af\u5883\u7b7e\u540d\u8bc1\u4e66\u914d\u7f6e ################################
+##\u7b7e\u540d\u8bc1\u4e66\u8def\u5f84\uff0c\u5fc5\u987b\u4f7f\u7528\u7edd\u5bf9\u8def\u5f84\uff0c\u5982\u679c\u4e0d\u60f3\u4f7f\u7528\u7edd\u5bf9\u8def\u5f84\uff0c\u53ef\u4ee5\u81ea\u884c\u5b9e\u73b0\u76f8\u5bf9\u8def\u5f84\u83b7\u53d6\u8bc1\u4e66\u7684\u65b9\u6cd5\uff1b\u6d4b\u8bd5\u8bc1\u4e66\u6240\u6709\u5546\u6237\u5171\u7528\u5f00\u53d1\u5305\u4e2d\u7684\u6d4b\u8bd5\u7b7e\u540d\u8bc1\u4e66\uff0c\u751f\u4ea7\u73af\u5883\u8bf7\u4ececfca\u4e0b\u8f7d\u5f97\u5230
+#acpsdk.signCert.path=PM_700000000000001_acp.pfx
+acpsdk.signCert.path=PM_83100000000830401.pfx
+##\u7b7e\u540d\u8bc1\u4e66\u5bc6\u7801\uff0c\u6d4b\u8bd5\u73af\u5883\u56fa\u5b9a000000\uff0c\u751f\u4ea7\u73af\u5883\u8bf7\u4fee\u6539\u4e3a\u4ececfca\u4e0b\u8f7d\u7684\u6b63\u5f0f\u8bc1\u4e66\u7684\u5bc6\u7801\uff0c\u6b63\u5f0f\u73af\u5883\u8bc1\u4e66\u5bc6\u7801\u4f4d\u6570\u9700\u5c0f\u4e8e\u7b49\u4e8e6\u4f4d\uff0c\u5426\u5219\u4e0a\u4f20\u5230\u5546\u6237\u670d\u52a1\u7f51\u7ad9\u4f1a\u5931\u8d25
+#acpsdk.signCert.pwd=000000
+acpsdk.signCert.pwd=123456
+##\u7b7e\u540d\u8bc1\u4e66\u7c7b\u578b\uff0c\u56fa\u5b9a\u4e0d\u9700\u8981\u4fee\u6539
+acpsdk.signCert.type=PKCS12
+##########################\u9a8c\u7b7e\u8bc1\u4e66\u914d\u7f6e################################
+##\u9a8c\u8bc1\u7b7e\u540d\u8bc1\u4e66\u76ee\u5f55\uff0c\u53ea\u914d\u7f6e\u5230\u76ee\u5f55\u5373\u53ef\uff0c\u5fc5\u987b\u4f7f\u7528\u7edd\u5bf9\u8def\u5f84\uff0c\u5982\u679c\u4e0d\u60f3\u4f7f\u7528\u7edd\u5bf9\u8def\u5f84\uff0c\u53ef\u4ee5\u81ea\u884c\u5b9e\u73b0\u76f8\u5bf9\u8def\u5f84\u83b7\u53d6\u8bc1\u4e66\u7684\u65b9\u6cd5\uff1b\u6d4b\u8bd5\u8bc1\u4e66\u6240\u6709\u5546\u6237\u5171\u7528\u5f00\u53d1\u5305\u4e2d\u7684\u6d4b\u8bd5\u9a8c\u8bc1\u8bc1\u4e66\uff0c\u751f\u4ea7\u73af\u5883\u6240\u6709\u5546\u6237\u5171\u7528\u5f00\u53d1\u5305\u4e2d\u7684\u751f\u4ea7\u9a8c\u7b7e\u8bc1\u4e66
+#windows\u4e0b
+acpsdk.validateCert.dir=\\
+##########################\u52a0\u5bc6\u8bc1\u4e66\u914d\u7f6e################################
+##\u654f\u611f\u4fe1\u606f\u52a0\u5bc6\u8bc1\u4e66\u8def\u5f84(\u5546\u6237\u53f7\u5f00\u901a\u4e86\u5546\u6237\u5bf9\u654f\u611f\u4fe1\u606f\u52a0\u5bc6\u7684\u6743\u9650\uff0c\u9700\u8981\u5bf9 \u5361\u53f7accNo\uff0cpin\u548cphoneNo\uff0ccvn2\uff0cexpired\u52a0\u5bc6\uff08\u5982\u679c\u8fd9\u4e9b\u4e0a\u9001\u7684\u8bdd\uff09\uff0c\u5bf9\u654f\u611f\u4fe1\u606f\u52a0\u5bc6\u4f7f\u7528)
+#acpsdk.encryptCert.path=encrypt.cer
+acpsdk.encryptCert.path=acp_prod_enc.cer
+##\u662f\u5426\u542f\u7528\u591a\u8bc1\u4e66\u6a21\u5f0f(true:\u5355\u8bc1\u4e66|false:\u591a\u8bc1\u4e66---\u6ca1\u6709\u914d\u7f6e\u6b64\u9879\u65f6,\u9ed8\u8ba4\u4e3a\u5355\u8bc1\u4e66\u6a21\u5f0f)
+acpsdk.singleMode=true
+##\u56de\u6389\u5730\u5740########
+UNIONPAY_NOTIFY_URL=http://154v61q180.imwork.net/ck/online/channel/callBack/unionpay/
+
+#appstore\u652f\u4ed8\u914d\u7f6e 0:\u6b63\u5f0f  1:\u6c99\u76d2\u6d4b\u8bd5
+ios.payType=1
+
+#####################redis####################
+redis.host=127.0.0.1
+redis.port=6379
+#redis.pass=ckhd20160727liupeitest1033
+redis.pass=
+redis.timeout=10000
+redis.weight=1
+
+redis.maxIdle=8
+redis.maxTotal=50
+redis.maxWaitMillis=10000
+redis.testOnBorrow=true
+redis.testOnReturn=true
+
+#\u53d1\u9001countly\u7684\u6570\u636e\u8fde\u63a5
+COUNTLY_FORWARD_URL = http://112.74.79.28
+
+##################ios\u63a8\u9001\u6d88\u606f######################
+#\u8bc1\u4e66\u7684\u4f4d\u7f6e
+IOS_PUSH_CERT_ADDRESS_TEST=D:\\sert\\
+IOS_PUSH_CERT_ADDRESS=D:\\sert\\
+
+#####################\u5a01\u5bcc\u901a########################
+#\u79d8\u94a5
+WFT_KEY=a71f862ee4624844545ed9eb016d7d2d
+#\u5546\u6237\u7f16\u53f7
+#WFT_APPID=100520000104
+WFT_APPID=7502000040
+#\u56de\u6389\u5730\u5740
+WFT_NOTIFY_URL=http://154v61q180.imwork.net/ck/online/channel/callBack/wft/
+#\u5e7f\u544a\u751f\u6210\u7684\u6a21\u677f\u653e\u7684\u5730\u5740
+adUrl=http://154v61q180.imwork.net/

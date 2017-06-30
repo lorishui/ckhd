@@ -1,0 +1,26 @@
+/*
+ * ckhd
+ */
+package me.ckhd.opengame.buyflow.task;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import me.ckhd.opengame.online.entity.RoleInfo;
+
+public class BuyFlowTaskUtils {
+
+	private static final ExecutorService executorService = Executors
+			.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+
+	public static void buyflowHandle(RoleInfo register) {
+		
+//		register
+		//
+		executorService.execute(null);
+	}
+
+	public static void stopTask() {
+		executorService.shutdown();
+	}
+}

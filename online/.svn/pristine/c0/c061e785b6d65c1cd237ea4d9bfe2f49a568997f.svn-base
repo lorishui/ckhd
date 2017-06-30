@@ -1,0 +1,34 @@
+package me.ckhd.opengame.online.response.weimi;
+
+import java.util.Map;
+
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.response.BasePayResponse;
+
+public class PayResponse extends BasePayResponse {
+	
+	boolean isSuccess = false;
+	public PayResponse(OnlinePay onlinePay) {
+		super(onlinePay);
+		result.put("resultCode", -1);
+		if(onlinePay!=null ){
+
+				result.put("resultCode", 0);
+				result.put("errMsg", "");
+		}else{
+			result.put("errMsg", "请求失败");
+		}
+	}
+
+	@Override
+	public Map<String, Object> getResult() {
+		return result;
+	}
+
+	
+	@Override
+	public boolean isSuccess() {
+		return isSuccess;
+	}
+	
+}

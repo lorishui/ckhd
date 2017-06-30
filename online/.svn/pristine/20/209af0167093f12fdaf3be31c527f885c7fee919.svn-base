@@ -1,0 +1,54 @@
+package me.ckhd.opengame.online.response.tencent1;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+import me.ckhd.opengame.common.utils.CoderUtils;
+import me.ckhd.opengame.common.utils.SignContext;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.response.BasePayCallBackResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class PayCallBackResponse extends BasePayCallBackResponse{
+
+	Logger logger = LoggerFactory.getLogger(PayCallBackResponse.class);
+	
+	boolean isSuccess = false;
+	public PayCallBackResponse(OnlinePay _onlinePay) {
+		super(_onlinePay);
+		String header = "";
+		try {
+			header = "GET&"+URLEncoder.encode("/v3/pay/buy_goods", "utf-8")+"&";
+		} catch (UnsupportedEncodingException e) {
+			logger.error("URLEncoder error!", e);
+		}
+		String sigContent = SignContext.getSignContextUrlEncode(_onlinePay.getCallBackMap(), header, "&");
+		logger.info("tencent present_m sigContent="+sigContent);
+		String sig = CoderUtils.makeSig(sigContent, onlinePay.getPayInfoConfig().getExInfoMap().get("mAppKey").toString()+"&");
+		logger.info("tencent present_m sig="+sig);
+		if(sig.equals(_onlinePay.getCallBackMap().get("sig"))){
+			isSuccess = true;
+		}
+	}
+
+	@Override
+	public boolean isSuccess() {
+		return isSuccess;
+	}
+	
+	@Override
+	public String getCallBackResult() {
+		if(isSuccess){
+			return "{\"ret\":0,\"msg\":\"OK\"}";
+		}else{
+			return "{\"ret\":1,\"msg\":\"系统繁忙\"}";
+		}
+	}
+
+	@Override
+	public String getReturnSuccess() {
+		return "{\"ret\":0,\"msg\":\"OK\"}";
+	}
+}

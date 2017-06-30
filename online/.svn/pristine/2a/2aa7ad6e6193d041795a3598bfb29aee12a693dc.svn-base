@@ -1,0 +1,74 @@
+package me.ckhd.opengame.stats.web;
+
+import java.util.List;
+
+import me.ckhd.opengame.common.persistence.Verdict;
+import me.ckhd.opengame.common.utils.DateUtils;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.common.web.BaseController;
+import me.ckhd.opengame.stats.entity.StatRelated;
+import me.ckhd.opengame.stats.service.StatRelateService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping(value = "${adminPath}/stats")
+@Controller
+public class StatRelateController extends BaseController {
+	
+	@Autowired
+	private StatRelateService statRelateService;
+	
+	@RequestMapping("new")
+	public String statNew(StatRelated statRelated,Model model){
+		if ( !Verdict.isAllow(statRelated.getCkAppId())) {
+			return "403";
+		}
+		StatRelated param = null;
+		List<StatRelated> list = null;
+		try {
+			param = (StatRelated) statRelated.clone();
+			if( StringUtils.isBlank(statRelated.getStartTime()) || StringUtils.isBlank(statRelated.getEndTime()) ){
+				statRelated.setStartTime(DateUtils.getDate("yyyyMMdd")+"00");
+				statRelated.setEndTime(DateUtils.getDate("yyyyMMdd")+"23");
+				param.setStartTime(DateUtils.getDate("yyyy-MM-dd"));
+				param.setEndTime(DateUtils.getDate("yyyy-MM-dd"));
+			}else{
+				statRelated.setStartTime(statRelated.getStartTime().replace("-", "")+"00");
+				statRelated.setEndTime(statRelated.getEndTime().replace("-", "")+"23");
+			}
+			//处理条件
+			getSelectStatRelate(statRelated);
+			list = statRelateService.statsNew(statRelated);
+		} catch (CloneNotSupportedException e) {
+			logger.error("", e);
+		}
+		model.addAttribute("data", list);
+		model.addAttribute("statRelate",param);
+		return "modules/stats/statNew";
+	}
+
+	private void getSelectStatRelate(StatRelated statRelated) {
+		if( 1 == statRelated.getGroupChildCkAppId() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",childCkAppId");
+		}
+		if( 1 == statRelated.getGroupChannel() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",ckChannelId");
+		}
+		if( 1 == statRelated.getGroupChildChannel() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",childChannelId");
+		}
+		if( statRelated.getTimeStyle() > 0 ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",timeframes");
+			if(statRelated.getTimeStyle() == 2){
+				statRelated.setTimeFt("%Y%m%d");
+			}
+			if(statRelated.getTimeStyle() == 3){
+				statRelated.setTimeFt("%Y%m");
+			}
+		}
+	}
+	
+}

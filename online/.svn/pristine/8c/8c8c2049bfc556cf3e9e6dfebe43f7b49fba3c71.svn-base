@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.buyflow.dao.BuyFlowStatDao">
+
+
+	<select id="findList" resultType="BuyFlowStat">
+		SELECT
+			<if test="groupByDay == 1">
+				a.stats_date as statsDate,
+			</if>
+			<if test="group == 0">
+				a.media as media,
+			</if>
+			<if test="group == 1">
+				b.`name` as buyFlowName,
+			</if>
+			b.id as activityId,
+			SUM(a.click_num) as clickNum,
+			SUM(a.device_click_Num) as deviceClickNum,
+			SUM(a.active_num) as activeNum,
+			SUM(a.register_num) as registerNum
+		FROM
+			buy_flow_base_stats a
+		JOIN buy_flow_activity b ON a.ckapp_id = b.ckapp_id
+		AND a.child_ckapp_Id = b.child_ckapp_id
+		AND a.media = b.media_id
+		AND a.ad_item = b.ad_item
+		WHERE 
+			stats_date >= #{startDate}
+			AND stats_date <![CDATA[<=]]> #{endDate}
+		group by
+		 ${groupBy}
+	</select>
+	
+	<select id="getData" resultType="BuyFlowStat">
+		SELECT
+			a.ckapp_id as ckappId,
+			a.child_ckapp_id as childCkappId,
+			a.media as media,
+			a.ad_item as adItem,
+			a.stats_date as statsDate,
+			b.`name` as buyFlowName,
+			SUM(a.click_num) as clickNum,
+			SUM(a.device_click_Num) as deviceClickNum,
+			SUM(a.active_num) as activeNum,
+			SUM(a.register_num) as registerNum
+		FROM
+			buy_flow_base_stats a
+		JOIN buy_flow_activity b ON a.ckapp_id = b.ckapp_id
+		AND a.child_ckapp_Id = b.child_ckapp_id
+		AND a.media = b.media_id
+		AND a.ad_item = b.ad_item
+		WHERE 
+			stats_date >= #{startDate}
+			AND stats_date <![CDATA[<=]]> #{endDate}
+			<if test="group == 0">
+				AND a.media = #{media}
+			</if>
+			<if test="group == 1">
+				AND b.id = #{activityId}
+			</if>
+		group by
+		 ${groupBy}
+		order by
+			statsDate	
+	</select>
+
+	<select id="getDayData" resultType="BuyFlowStat">
+		SELECT
+			a.ckapp_id as ckappId,
+			a.child_ckapp_id as childCkappId,
+			a.media as media,
+			a.ad_item as adItem,
+			a.stats_date as statsDate,
+			b.`name` as buyFlowName,
+			SUM(a.click_num) as clickNum,
+			SUM(a.device_click_Num) as deviceClickNum,
+			SUM(a.active_num) as activeNum,
+			SUM(a.register_num) as registerNum
+		FROM
+			buy_flow_base_stats a
+		JOIN buy_flow_activity b ON a.ckapp_id = b.ckapp_id
+		AND a.child_ckapp_Id = b.child_ckapp_id
+		AND a.media = b.media_id
+		AND a.ad_item = b.ad_item
+		WHERE 
+			stats_date = #{statsDate}
+			<if test="group == 0 and media != null">
+				AND a.media = #{media}
+			</if>
+			<if test="group == 1 and activityId != null">
+				AND b.id = #{activityId}
+			</if>
+		group by
+		 ${groupBy}
+		order by
+			statsDate	
+	</select>
+	
+	<select id="getMediaData" resultType="BuyFlowStat">
+		SELECT
+			b.`name` as buyFlowName,
+			SUM(a.click_num) as clickNum,
+			SUM(a.device_click_Num) as deviceClickNum,
+			SUM(a.active_num) as activeNum,
+			SUM(a.register_num) as registerNum
+		FROM
+			buy_flow_base_stats a
+		JOIN buy_flow_activity b ON a.ckapp_id = b.ckapp_id
+		AND a.child_ckapp_Id = b.child_ckapp_id
+		AND a.media = b.media_id
+		AND a.ad_item = b.ad_item
+		WHERE 
+			stats_date >= #{startDate}
+			AND stats_date <![CDATA[<=]]> #{endDate}
+			AND a.media = #{media}
+		group by
+		 ${groupBy}
+		order by
+			buyFlowName	
+	</select>
+	
+	<select id="getDayMediaData" resultType="BuyFlowStat">
+		SELECT
+			a.ckapp_id as ckappId,
+			a.child_ckapp_id as childCkappId,
+			a.media as media,
+			a.ad_item as adItem,
+			a.stats_date as statsDate,
+			b.`name` as buyFlowName,
+			SUM(a.click_num) as clickNum,
+			SUM(a.device_click_Num) as deviceClickNum,
+			SUM(a.active_num) as activeNum,
+			SUM(a.register_num) as registerNum
+		FROM
+			buy_flow_base_stats a
+		JOIN buy_flow_activity b ON a.ckapp_id = b.ckapp_id
+		AND a.child_ckapp_Id = b.child_ckapp_id
+		AND a.media = b.media_id
+		AND a.ad_item = b.ad_item
+		WHERE 
+			stats_date = #{statsDate}
+			AND a.media = #{media}
+		group by
+		 ${groupBy}
+		order by
+			buyFlowName	
+	</select>
+	
+</mapper>

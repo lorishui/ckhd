@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.online.dao.OnlineLoginDao">
+    	<sql id="OnlineUserColumns">
+			a.uid,
+    	    a.token, 
+			a.sid,
+			a.userName,
+			a.channelId,
+			a.ckAppId,
+			a.appVerifyInfo,
+			a.channelUserContent,
+			a.version,
+			a.loginType,
+			a.create_date,
+			a.update_date
+	    </sql>
+	
+		<!-- 根据渠道号,sid,ckappid获得渠道 -->
+		<select id="get" resultType="OnlineUser">
+			SELECT
+				<include refid="OnlineUserColumns"/> 
+			FROM app_online_user a
+			WHERE a.sid = #{sid} and a.channelId = #{channelId} and a.ckAppId = #{ckAppId}
+		</select>
+		
+		<!-- 根据渠道号,sid,ckappid获得渠道 -->
+		<select id="getValidateUser" resultType="OnlineUser">
+			SELECT
+				<include refid="OnlineUserColumns"/> 
+			FROM app_online_user a
+			WHERE a.uid=#{uid}
+		</select>
+		<!-- 更新渠道信息  -->
+		<update id="update">
+			UPDATE  app_online_user SET 
+				token = #{token},
+				update_date = #{updateDate},
+				appVerifyInfo= #{appVerifyInfo},
+				channelUserContent= #{channelUserContent},
+				version= #{version}
+			WHERE  uid=#{uid}
+		</update>
+		
+		<select id="getCount" resultType="int">
+		    SELECT
+				count(*)
+			FROM app_online_user a
+			WHERE a.channelId=#{channelId} and a.sid=#{sid} 
+			and a.ckAppId=#{ckAppId}
+		</select>
+		<!-- 插入渠道 -->
+	<insert id="insert">
+		INSERT INTO app_online_user(
+			uid,
+			token, 
+			sid,
+			userName,
+			channelId,
+			ckAppId,
+			appVerifyInfo,
+			channelUserContent,
+			version,
+			loginType,
+			create_date,
+			update_date
+		) VALUES (
+			#{uid},
+			#{token}, 
+			#{sid},
+			#{userName},
+			#{channelId}, 
+			#{ckAppId},
+			#{appVerifyInfo}, 
+			#{channelUserContent}, 
+			#{version},
+			#{loginType},
+			#{createDate},
+			#{updateDate}
+		)
+	</insert>
+
+		
+</mapper>

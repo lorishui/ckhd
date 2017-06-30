@@ -1,0 +1,180 @@
+package me.ckhd.opengame.online.handle;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.common.config.Global;
+import me.ckhd.opengame.common.utils.DateUtils;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.entity.OnlineUser;
+import me.ckhd.opengame.online.handle.common.unionpay.CertUtil;
+import me.ckhd.opengame.online.handle.common.unionpay.SDKConfig;
+import me.ckhd.opengame.online.handle.common.unionpay.SDKUtil;
+import me.ckhd.opengame.online.handle.common.unionpay.SDKConstants;
+
+import org.springframework.stereotype.Component;
+
+import com.alibaba.fastjson.JSONObject;
+
+@Component("unionpay")
+public class unionpayHandle extends BaseHandle{
+
+	public String encoding = "";
+	
+	@Override
+	public String login(OnlineUser onlineUser, JSONObject codeJson,
+			PayInfoConfig payInfo) {
+		return null;
+	}
+
+	@Override
+	public String pay(OnlinePay onlinePay, JSONObject codeJson) {
+		JSONObject result = new JSONObject();
+		result.put("resultCode",-1);
+		Map<String, String> contentData = getParamMap(onlinePay,codeJson);
+		Map<String, String> submitFromData = SDKUtil.signData(contentData,SDKUtil.encoding_UTF8);//报文中certId,signature的值是在signData方法中获取并自动赋值的，只要证书配置正确即可。
+		String requestAppUrl = SDKConfig.getConfig().getAppRequestUrl();//交易请求url从配置文件读取对应属性文件acp_sdk.properties中的 acpsdk.backTransUrl
+//		String signature = "";//签名	signature	M	填写对报文摘要的签名
+		Map<String, String> resmap = SDKUtil.submitUrl(submitFromData,requestAppUrl,SDKUtil.encoding_UTF8);
+		
+		String respCode = resmap.get("respCode");
+		if(respCode != null && ("00").equals(respCode)){
+			String tn = resmap.get("tn");
+			onlinePay.setPrepayid(tn);
+			result.put("resultCode",0);
+			result.put("errMsg","SUCCESS");
+			JSONObject data = new JSONObject();
+			data.put("tn", tn);
+			result.put("result", data);
+		}else{
+			log.info("银联错误信息："+resmap.get("respMsg"));
+			result.put("errMsg","去银联那边下单失败！");
+		}
+		return result.toJSONString();
+	}
+	
+	private Map<String, String> getParamMap(OnlinePay onlinePay, JSONObject codeJson) {
+		/**银联全渠道系统，产品参数，除了encoding自行选择外其他不需修改**/
+		String version = "5.0.0";//版本号	version	M	固定填写
+		String encoding = "UTF-8";//编码方式	encoding 
+		String signMethod = "01";//签名方法	signMethod	M	01-RSA 02-MD5(暂不支持)
+		String txnType = "01";//交易类型	txnType	M	取值：01 
+		String txnSubType = "01";//交易子类	txnSubType	
+		String bizType = "000201";//产品类型	bizType	M
+		String channelType = "07";//渠道类型	channelType	M
+		/**商户接入参数*/	
+		String merId = "";
+		if( onlinePay.getPayInfoConfig() == null || StringUtils.isBlank(merId) ){
+			merId = Global.getConfig("UNIONPAY_MERID");//商户代码	merId	M
+		}else{
+			merId = onlinePay.getPayInfoConfig().getAppid();
+		}
+		String accessType = "0";//接入类型，商户接入填0 ，不需修改（0：直连商户， 1： 收单机构 2：平台商户）
+		String orderId = onlinePay.getOrderId();//orderId
+		String txnTime = DateUtils.getDate("yyyyMMddHHmmss");//订单发送时间，取系统时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
+		String accType = "01";////账号类型 01：银行卡02：存折03：IC卡帐号类型(卡介质)
+		/**处理子字段*/
+		String encryptCertId = "";
+		String path = "";
+		if( onlinePay.getPayInfoConfig() != null && StringUtils.isNotBlank(path) ){
+			path = (String)onlinePay.getPayInfoConfig().getExInfoMap().get("acpsdk.encryptCert.path");
+			encryptCertId = CertUtil.getEncryptCertId(path);//证书ID	 certId	M	通过MPI插件获取
+		}else{
+			encryptCertId = CertUtil.getEncryptCertId();//证书ID	 certId	M	通过MPI插件获取
+		}
+		String txnAmt = onlinePay.getPrices()+"";//交易金额	txnAmt	M	交易单位为分
+		String currencyCode = "156";//交易币种	currencyCode	M	默认为156
+		//String accNo = SDKUtil.encryptPan(verifyInfo.get("accNo")!=null?verifyInfo.get("accNo").toString():"", "UTF-8"); //这里测试的时候使用的是测试卡号，正式环境请使用真实卡号
+		//callBack/unionpay/1029/52
+		String backUrl = Global.getConfig("UNIONPAY_NOTIFY_URL");//回掉地址
+		
+		Map<String,String> contentData = new HashMap<String, String>();
+		contentData.put("version",version);
+		contentData.put("encoding",encoding);
+		contentData.put("signMethod",signMethod);
+		contentData.put("txnType",txnType);
+		contentData.put("txnSubType",txnSubType);
+		contentData.put("bizType",bizType);
+		contentData.put("channelType",channelType);
+		contentData.put("merId",merId);
+		contentData.put("accessType",accessType);
+		contentData.put("orderId",orderId);
+		contentData.put("txnTime",txnTime);
+		contentData.put("accType",accType);
+		contentData.put("encryptCertId",encryptCertId);
+		contentData.put("txnAmt",txnAmt);
+		contentData.put("currencyCode",currencyCode);
+		contentData.put("backUrl",backUrl);
+		/*contentData.put("accNo", accNo);*/
+		return contentData;
+	}
+	
+	@Override
+	public void parseParamter(String code, HttpServletRequest request,
+			OnlinePay onlinePay) {
+		try{
+			request.setCharacterEncoding("ISO-8859-1");
+			encoding = request.getParameter(SDKConstants.param_encoding);
+			for(Object key:request.getParameterMap().keySet()){
+				respData.put(key.toString(), new String(request.getParameter(key.toString()).getBytes("ISO-8859-1"), encoding));
+			}
+			log.info("unionpay callback content:"+respData.toString());
+			if(respData.size() > 0){
+				onlinePay.setOrderId(respData.getString("orderId"));
+				onlinePay.setActualAmount(respData.containsKey("txnAmt")?(respData.getDouble("txnAmt")*100)+"":"0");
+				onlinePay.setCallBackContent(StringUtils.isNotBlank(code)?code:respData.toJSONString());
+				onlinePay.setChannelOrderId(respData.getString("queryId"));
+			}
+		}catch(Throwable e){
+			log.error("银联 callback 解析数据失败!", e);
+		}
+	}
+
+	@Override
+	public String verifyData(OnlinePay onlinePay, JSONObject result,
+			HttpServletResponse response) {
+		
+		//重要！验证签名前不要修改reqParam中的键值对的内容，否则会验签不过
+		if( respData.containsKey("respCode") && "00".equals(respData.getString("respCode")) ){
+			Map<String,String> map = getVaildMap(respData);
+			if (SDKUtil.validate(map, encoding)) {
+				log.info("unionpay callback validation success.");
+				result.put("code", 2000);
+				return getReturnSuccess();
+			} else {
+				log.info("unionpay callback validation failure.");
+				result.put("code", 4006);
+				result.put("errMsg", "验证错误！");
+				return getReturnFailure();
+			}
+		}else{
+			result.put("code", 4007);
+			result.put("errMsg", "返回码异常！");
+			return getReturnFailure();
+		}
+	}
+
+	private Map<String,String> getVaildMap(JSONObject json){
+		Map<String,String> map = new HashMap<String, String>();
+		for(String key:json.keySet()){
+			map.put(key, json.getString(key));
+		}
+		return map;
+	}
+	
+	@Override
+	public String getReturnSuccess() {
+		return "ok";
+	}
+
+	@Override
+	public String getReturnFailure() {
+		return "fail";
+	}
+
+}

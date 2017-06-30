@@ -1,0 +1,11 @@
+package me.ckhd.opengame.stats.dao;
+
+import org.springframework.stereotype.Repository;
+
+import me.ckhd.opengame.common.persistence.CrudDao;
+import me.ckhd.opengame.stats.entity.StatRelated;
+
+@Repository
+public interface StatRelatedDao extends CrudDao<StatRelated>{
+	
+}

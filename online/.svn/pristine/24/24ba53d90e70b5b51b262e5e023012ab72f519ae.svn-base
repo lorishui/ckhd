@@ -1,0 +1,203 @@
+package me.ckhd.opengame.stats.web;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import me.ckhd.opengame.common.persistence.Verdict;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.common.web.BaseController;
+import me.ckhd.opengame.stats.entity.StatRelated;
+import me.ckhd.opengame.stats.entity.StatRetention;
+import me.ckhd.opengame.stats.service.StatRelateService;
+import me.ckhd.opengame.stats.service.StatRetentionService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping(value = "${adminPath}/stats")
+@Controller
+public class StatRetentionController extends BaseController {
+	
+	@Autowired
+	private StatRetentionService srdService;
+	@Autowired
+	private	StatRelateService deviceService;
+	
+	
+	@RequestMapping("retention")
+	public String statRetention(StatRetention statRetention,Model model ){
+		if ( !Verdict.isAllow(statRetention.getCkAppId())) {
+			return "403";
+		}
+		StatRetention param = null;
+		List<StatRetention> list = null;
+		try {
+			param = (StatRetention) statRetention.clone();
+			StatRelated statRelated =  getStatRelated(statRetention);
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(new Date());
+			if( StringUtils.isBlank(statRetention.getStartTime()) || StringUtils.isBlank(statRetention.getEndTime()) ){
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+				cal.add(Calendar.DAY_OF_MONTH, -1);
+				statRetention.setEndTime(sdf.format(cal.getTime()));
+				param.setEndTime(sdf2.format(cal.getTime()));
+
+				cal.add(Calendar.DAY_OF_MONTH, -5);
+				statRetention.setStartTime(sdf.format(cal.getTime()));
+				param.setStartTime(sdf2.format(cal.getTime()));
+			}else{
+				statRetention.setStartTime(statRetention.getStartTime().replace("-", ""));
+				statRetention.setEndTime(statRetention.getEndTime().replace("-", ""));
+			}
+			statRelated.setEndTime(statRetention.getEndTime()+"23");
+			statRelated.setStartTime(statRetention.getStartTime()+"00");
+			getSelectStatRelate(statRelated);
+			getSelectStatRetention(statRetention);
+			list = srdService.statsData(statRetention);
+			List<StatRelated> deviceList = deviceService.getTotalNum(statRelated);
+			combainData(list,deviceList);
+		} catch (Exception e) {
+			logger.error("", e);
+		}
+		model.addAttribute("data", list);
+		model.addAttribute("statRetention",param);
+		return "modules/stats/statRetentionData";
+	}
+	
+	
+	@RequestMapping("LTV")
+	public String statLTV(StatRetention statLTV,Model model ){
+		if ( !Verdict.isAllow(statLTV.getCkAppId())) {
+			return "403";
+		}
+		StatRetention param = null;
+		List<StatRetention> list = null;
+		try {
+			param = (StatRetention) statLTV.clone();
+			StatRelated statRelated =  getStatRelated(statLTV);
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(new Date());
+			if( StringUtils.isBlank(statLTV.getStartTime()) || StringUtils.isBlank(statLTV.getEndTime()) ){
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+				cal.add(Calendar.DAY_OF_MONTH, -2);
+				statLTV.setEndTime(sdf.format(cal.getTime()));
+				param.setEndTime(sdf2.format(cal.getTime()));
+				
+				cal.add(Calendar.DAY_OF_MONTH, -5);
+				statLTV.setStartTime(sdf.format(cal.getTime()));
+				param.setStartTime(sdf2.format(cal.getTime()));
+			}else{
+				statLTV.setStartTime(statLTV.getStartTime().replace("-", ""));
+				statLTV.setEndTime(statLTV.getEndTime().replace("-", ""));
+			}
+			statRelated.setEndTime(statLTV.getEndTime()+"23");
+			statRelated.setStartTime(statLTV.getStartTime()+"00");
+			getSelectStatRelate(statRelated);
+			getSelectStatRetention(statLTV);
+			List<StatRelated> deviceList = deviceService.getTotalNum(statRelated);
+			list = srdService.statsLTVData(statLTV);
+			combainData(list,deviceList);
+		} catch (Exception e) {
+			logger.error("", e);
+		}
+		model.addAttribute("data", list);
+		model.addAttribute("statLTV",param);
+		return "modules/stats/statLTV";
+	}
+	
+	/**
+	 * 组装查询group by条件
+	 * @param statRelated
+	 */
+	private void getSelectStatRetention(StatRetention statRetention) {
+		if( 1 == statRetention.getGroupCkAppId() ){
+			statRetention.setGroupBy(statRetention.getGroupBy()+",ckAppId");
+		}
+		if( 1 == statRetention.getGroupChildCkAppId() ){
+			statRetention.setGroupBy(statRetention.getGroupBy()+",childAppId");
+		}
+		if( 1 == statRetention.getGroupChannel() ){
+			statRetention.setGroupBy(statRetention.getGroupBy()+",channelId");
+		}
+		if( 1 == statRetention.getGroupChildChannel() ){
+			statRetention.setGroupBy(statRetention.getGroupBy()+",childChannelId");
+		}
+	}
+	
+	/**
+	 * 组装查询group by条件
+	 * @param statRelated
+	 */
+	private void getSelectStatRelate(StatRelated statRelated) {
+		if( 1 == statRelated.getGroupCkAppId() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",ckAppId");
+		}
+		if( 1 == statRelated.getGroupChildCkAppId() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",childCkAppId");
+		}
+		if( 1 == statRelated.getGroupChannel() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",ckChannelId");
+		}
+		if( 1 == statRelated.getGroupChildChannel() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",childChannelId");
+		}
+		statRelated.setTimeFt("%Y%m%d");
+	}
+	
+	/**
+	 * 组装留存数量与新增总数
+	 * @param list
+	 * @param deviceList
+	 */
+	private void combainData(List<StatRetention> list, List<StatRelated> deviceList) {
+		for (StatRelated statRelated : deviceList) {
+			for (StatRetention srd : list) {
+				String ckAppId = srd.getCkAppId();
+				String childCkAppId = srd.getChildCkAppId();
+				String ckChannelId = srd.getCkChannelId();
+				String childChannelId = srd.getChildChannelId();
+				if(statRelated.getTimeframes().equals(srd.getRegTime())
+					&& (ckAppId!=null?ckAppId.equals(statRelated.getCkAppId()):true)
+					&& (childCkAppId!=null?childCkAppId.equals(statRelated.getChildCkAppId()):true)
+					&& (ckChannelId!=null?ckChannelId.equals(statRelated.getCkChannelId()):true)
+					&& (childChannelId!=null?childChannelId.equals(statRelated.getChildChannelId()):true)
+						){
+					srd.setTotalNum(statRelated.getNewNum());
+				}
+			}
+		}
+	}
+
+
+	private StatRelated getStatRelated(StatRetention srd){
+		StatRelated statRelated = new StatRelated();
+		if(StringUtils.isNotBlank(srd.getCkAppId())){
+			statRelated.setCkAppId(srd.getCkAppId());
+		}
+		if(StringUtils.isNotBlank(srd.getChildCkAppId())){
+			statRelated.setChildCkAppId(srd.getChildCkAppId());
+		}
+		if(StringUtils.isNotBlank(srd.getCkChannelId())){
+			statRelated.setCkChannelId(srd.getCkChannelId());
+		}
+		if(StringUtils.isNotBlank(srd.getChildChannelId())){
+			statRelated.setChildChannelId(srd.getChildChannelId());
+		}
+		statRelated.setGroupCkAppId(srd.getGroupCkAppId());
+		statRelated.setGroupChildCkAppId(srd.getGroupChildCkAppId());
+		statRelated.setGroupChannel(srd.getGroupChannel());
+		statRelated.setGroupChildChannel(srd.getGroupChildChannel());
+		return statRelated;
+	}
+	
+
+
+
+	
+}

@@ -1,0 +1,187 @@
+package me.ckhd.opengame.online.version;
+
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.ckhd.opengame.app.entity.APPCk;
+import me.ckhd.opengame.app.entity.PayCodeConfig;
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.app.utils.AppCkUtils;
+import me.ckhd.opengame.common.utils.SpringContextHolder;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.handle.BaseHandle;
+import me.ckhd.opengame.online.sendOrder.task.OrderSenderBoot;
+import me.ckhd.opengame.online.util.OrderStatus;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSONObject;
+
+@Service("onlineVersion120")
+public class OnlineVersion120 extends OnlineVersion110{
+	
+	
+	@Override
+	public String callback(String code,String engName,HttpServletRequest request,HttpServletResponse response) {
+		boolean isExistChannelOutId = false;
+		JSONObject json = new JSONObject();
+		String returnStr = null;
+		OnlinePay newPay = null;
+		OnlinePay onlinePay = null;
+		boolean isSuccess = false;
+		try {
+			//处理逻辑
+			BaseHandle handle = SpringContextHolder.getBean(engName);
+			if( handle == null ){
+				logger.info(engName+"提示：地址非法");
+				return "地址非法";
+			}
+			onlinePay = new OnlinePay();
+			if("anzhi".equals(engName)){
+				OnlinePay ob = new OnlinePay();
+				ob.setCkAppId(request.getParameter("ckAppId"));
+				ob.setChannelId("9");
+				ob.setPayType("141");
+				PayInfoConfig payInfo = getPayInfoConfig(ob);
+				onlinePay.setPayInfoConfig(payInfo);
+			}
+			if("zhangyue".equals(engName)){
+				OnlinePay ob = new OnlinePay();
+				String ckAppId = request.getParameter("ckAppId");
+				ob.setCkAppId(ckAppId);
+				ob.setChannelId("256");
+				ob.setPayType("141");
+				PayInfoConfig payInfo = getPayInfoConfig(ob);
+				onlinePay.setPayInfoConfig(payInfo);
+			}
+			handle.parseParamter(code, request,onlinePay);
+			if(StringUtils.isNotBlank(onlinePay.getOrderId())){
+				//百度处理
+				if("baidu".equals(engName)){
+					newPay = onlineService.getOrderById(onlinePay.getOrderId());
+					if( newPay == null ){
+						newPay = onlineService.getOrderByOrderId(onlinePay.getOrderId());
+					}
+				}else{
+					newPay = onlineService.getOrderByOrderId(onlinePay.getOrderId());
+				}
+				//appstore支付，googleplay支付验证
+				if( newPay != null && !OrderStatus.PAY_SUCCESS.equals(newPay.getOrderStatus()) ){
+					if(validChannel.containsKey(engName)){
+						if( StringUtils.isNotBlank(onlinePay.getChannelOrderId()) ){
+							OnlinePay validPay = onlineService.getOrderByChannelOrderIdOther(onlinePay.getChannelOrderId());
+							if(validPay != null){
+								isExistChannelOutId = true;
+								returnStr = handle.getReturnSuccess();
+								logger.info("提示：订单已经验证！外部订单号["+newPay.getChannelOrderId()+"] 返回值"+engName+":"+returnStr);
+								return returnStr;
+							}
+						}
+					}
+				}
+			}else if(StringUtils.isNotBlank(onlinePay.getChannelOrderId())){
+				newPay = onlineService.getOrderByChannelOrderIdOther(onlinePay.getChannelOrderId());
+				if(newPay == null){
+					newPay = onlineService.getOrderByPrepayid(onlinePay.getChannelOrderId());
+					if(newPay == null){
+						logger.info(String.format("外部订单号订为[%s]的订单不存在!", onlinePay.getChannelOrderId()));
+						json.put("resultCode", 4003);
+						json.put("errMsg", "无效订单");
+						logger.info(engName+"提示：无效订单");
+					}
+				}
+			}else{
+				json.put("resultCode", 4004);
+				json.put("errMsg", "无法定位记录");
+				logger.info(engName+"提示：无法定位记录");
+			}
+			if( newPay != null ){
+				//已成功的订单处理
+				if(OrderStatus.PAY_SUCCESS.equals(newPay.getOrderStatus())){
+					returnStr = handle.getReturnSuccess();
+					logger.info("提示：订单已经验证！订单号["+newPay.getOrderId()+"] 返回值"+engName+":"+returnStr);
+					return returnStr;
+				}
+				//获取计费点信息
+				PayCodeConfig payCodeConfig = getPayCodeConfig(newPay);
+				newPay.setPayCodeConfig(payCodeConfig);
+				PayInfoConfig payInfoConfig = null;
+				if( "121".equals(newPay.getPayType())){
+					payInfoConfig = getPayInfoConfigByChild(newPay);
+				}else{
+					payInfoConfig = getPayInfoConfig(newPay);
+				}
+				newPay.setPayInfoConfig(payInfoConfig);
+				JSONObject result = new JSONObject();
+				returnStr = handle.verifyData(newPay,result,response);
+				if( result.getInteger("code") == 2000){
+					newPay.setProductName(payCodeConfig==null?null:payCodeConfig.getProductName());
+					APPCk appCk =AppCkUtils.getAppCkByIdAndChild(newPay.getCkAppId(),newPay.getChildCkAppId());
+					//5.判断是否为网游或者是否配置下发地址,如果非网游或者没有设置下发地址则不下发,反之下发到游戏
+					if( StringUtils.isNotBlank(appCk.getPayCallbackUrl()) || StringUtils.isNotBlank(newPay.getCallBackUrl()) ){
+						newPay.setSercetKey(appCk.getSecretKey());
+						newPay.setIsTest(onlinePay.getIsTest());
+						if(StringUtils.isBlank(newPay.getActualAmount())){
+							newPay.setActualAmount(onlinePay.getActualAmount());
+						}
+						newPay.setChannelOrderId(onlinePay.getChannelOrderId());
+						newPay.setCallBackContent(onlinePay.getCallBackContent());
+						Map<String, Object> map = handle.getSendOrder(newPay);
+						newPay.setSendNum(Integer.valueOf(map.get("sendNum")==null?"0":map.get("sendNum").toString()));
+						newPay.setOrderStatus(OrderStatus.PAY_SUCCESS);
+						newPay.setSendStatus(OrderStatus.SEND_DOWN_ING);
+						newPay.setErrMsg("");
+						newPay.setContent(map.get("content").toString());
+						onlineService.savePayInfo(newPay);
+						isSuccess = true;
+						//加入发货队列
+						OrderSenderBoot.getInstance().add(newPay);
+					}else{
+						newPay.setOrderStatus(OrderStatus.PAY_SUCCESS);
+						newPay.setErrMsg("");
+						newPay.setIsTest(onlinePay.getIsTest());
+						newPay.setCallBackContent(onlinePay.getCallBackContent());
+						if(StringUtils.isBlank(newPay.getActualAmount())){
+							newPay.setActualAmount(onlinePay.getActualAmount());
+						}
+						newPay.setChannelOrderId(onlinePay.getChannelOrderId());
+					}
+				}else{
+					onlinePay.setOrderStatus(OrderStatus.PAY_FAIL);
+					onlinePay.setCallBackContent(code);
+					returnStr = handle.getReturnFailure();
+					logger.info("提示：验证不通过!订单号["+newPay.getOrderId()+"] 返回值"+engName+":"+returnStr);
+				}
+			}
+		} catch (Throwable e) {
+			if( json.size() == 0 ){
+				json.put("resultCode", 4002);
+				json.put("errMsg", "内部错误");
+			}
+			logger.info("支付异常提示："+json.toJSONString());
+			logger.error("支付发生错误："+e.getMessage(),e);
+		}finally{
+			//出错的保存
+			if( newPay != null && StringUtils.isNotBlank(newPay.getId()) && !isSuccess){
+				if(StringUtils.isBlank(newPay.getActualAmount())){
+					newPay.setActualAmount(onlinePay.getActualAmount());
+				}
+				if(!isExistChannelOutId){
+					newPay.setCallBackContent(onlinePay.getCallBackContent());
+				}
+				newPay.setChannelOrderId(onlinePay.getChannelOrderId());
+				newPay.setIsTest(onlinePay.getIsTest());
+				newPay.setErrMsg(StringUtils.isNotBlank(returnStr)?returnStr:json.toJSONString());
+				onlineService.savePayInfo(newPay);
+			}
+		}
+		if( returnStr == null ){
+			returnStr = json.toJSONString();
+		}
+		logger.info(String.format("返回渠道的数据%s:[%s]",engName, returnStr));
+		return returnStr;
+	}
+}

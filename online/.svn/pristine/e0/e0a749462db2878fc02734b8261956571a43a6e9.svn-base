@@ -1,0 +1,50 @@
+package me.ckhd.opengame.online.handle;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Component;
+
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.entity.OnlineUser;
+
+import com.alibaba.fastjson.JSONObject;
+
+@Component("lenovo")
+public class lenovoHandle extends BaseHandle{
+
+	@Override
+	public String login(OnlineUser onlineUser, JSONObject codeJson,
+			PayInfoConfig payInfo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void parseParamter(String code, HttpServletRequest request,
+			OnlinePay onlinePay) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String verifyData(OnlinePay onlinePay, JSONObject result,
+			HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getReturnSuccess() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getReturnFailure() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

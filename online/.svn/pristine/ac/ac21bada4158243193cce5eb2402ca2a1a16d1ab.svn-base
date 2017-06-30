@@ -1,0 +1,596 @@
+package me.ckhd.opengame.stats.web;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import me.ckhd.opengame.common.persistence.Verdict;
+import me.ckhd.opengame.common.utils.DateUtils;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.common.web.BaseController;
+import me.ckhd.opengame.stats.entity.StatMoney;
+import me.ckhd.opengame.stats.entity.StatRelated;
+import me.ckhd.opengame.stats.entity.StatRetention;
+import me.ckhd.opengame.stats.service.StatMoneyService;
+import me.ckhd.opengame.stats.service.StatRelateService;
+import me.ckhd.opengame.stats.service.StatRetentionService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+
+@RequestMapping(value = "${adminPath}/stats")
+@Controller
+public class StatRelateController extends BaseController {
+	
+	@Autowired
+	private StatRelateService statRelateService;
+	@Autowired
+	private StatMoneyService statMoneyService;
+	@Autowired
+	private StatRetentionService srdService;
+	
+	
+
+	@RequestMapping("new")
+	public String statNew(StatRelated statRelated,Model model){
+		if ( !Verdict.isAllow(statRelated.getCkAppId())) {
+			return "403";
+		}
+		StatRelated param = null;
+		List<StatRelated> list = null;
+		try {
+			param = (StatRelated) statRelated.clone();
+			if( StringUtils.isBlank(statRelated.getStartTime()) || StringUtils.isBlank(statRelated.getEndTime()) ){
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(new Date());
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+				cal.add(Calendar.DAY_OF_MONTH, 0);
+				statRelated.setEndTime(sdf.format(cal.getTime())+"23");
+				param.setEndTime(sdf2.format(cal.getTime()));
+				
+				cal.add(Calendar.DAY_OF_MONTH, -3);
+				statRelated.setStartTime(sdf.format(cal.getTime())+"00");
+				param.setStartTime(sdf2.format(cal.getTime()));
+			}else{
+				statRelated.setStartTime(statRelated.getStartTime().replace("-", "")+"00");
+				statRelated.setEndTime(statRelated.getEndTime().replace("-", "")+"23");
+			}
+			//处理条件
+			statRelated.setGroupCkAppId(1);
+			getSelectStatRelate(statRelated);
+			statRelated.setTimeFt("%Y%m%d");
+			list = statRelateService.statsNew(statRelated);
+		} catch (CloneNotSupportedException e) {
+			logger.error("", e);
+		}
+		model.addAttribute("data", list);
+		model.addAttribute("statRelate",param);
+		return "modules/stats/statNew";
+	}
+	
+	private void getSelectStatRelate(StatRelated statRelated) {
+		if(StringUtils.isNotBlank(statRelated.getChildCkAppId())){
+			statRelated.setGroupChildCkAppId(1);
+		}
+		if(StringUtils.isNotBlank(statRelated.getCkChannelId())){
+			statRelated.setGroupChannel(1);
+		}
+		if( 1 == statRelated.getGroupChildChannel() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",childChannelId");
+			statRelated.setGroupChannel(1);
+		}
+		if( 1 == statRelated.getGroupChannel() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",ckChannelId");
+		}
+		if( 1 == statRelated.getGroupChildCkAppId() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",childCkAppId");
+		}
+		if( 1 == statRelated.getGroupCkAppId() ){
+			statRelated.setGroupBy(statRelated.getGroupBy()+",ckAppId");
+		}
+		if( statRelated.getTimeStyle() > 0 ){
+			if(statRelated.getTimeStyle() == 2){
+				statRelated.setTimeFt("%Y%m%d");
+			}
+			if(statRelated.getTimeStyle() == 1){
+				statRelated.setTimeFt("%Y%m%d%H");
+			}
+		}
+	}
+	
+	
+	/**
+	 * 新增
+	 * @param newUsersCount
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("graphNew")
+	public String graphicalNew(StatRelated statRelated,Model model){
+		if (!Verdict.isAllow(statRelated.getCkAppId())) {
+			return "403";
+		}
+		StringBuffer title = new StringBuffer();
+		StringBuffer legend_data = new StringBuffer();
+		String[] xAxis_data = null;
+		StatRelated param = null;
+		try{
+			if(statRelated.getTimeStyle() == 0){
+				statRelated.setTimeStyle(1);		//默认按小时
+			}
+			param = (StatRelated) statRelated.clone();
+			if(StringUtils.isBlank(statRelated.getStartTime()) || StringUtils.isBlank(statRelated.getEndTime())){
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(new Date());
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+				cal.add(Calendar.DAY_OF_MONTH, 0);
+				statRelated.setEndTime(sdf.format(cal.getTime())+"23");
+				param.setEndTime(sdf2.format(cal.getTime()));
+				
+				cal.add(Calendar.DAY_OF_MONTH, -3);
+				statRelated.setStartTime(sdf.format(cal.getTime())+"00");
+				param.setStartTime(sdf2.format(cal.getTime()));
+			}else{
+				statRelated.setStartTime(statRelated.getStartTime().replace("-", "")+"00");
+				statRelated.setEndTime(statRelated.getEndTime().replace("-", "")+"23");
+			}
+			legend_data.append("['今日','昨日','上周同期']");
+			//处理条件
+			getSelectStatRelate(statRelated);
+			xAxis_data = getAllGraph(statRelated, xAxis_data);
+			//获取数据
+			List<StatRelated> list = statRelateService.statsNew(statRelated);
+			JSONObject today = getData(list, xAxis_data,1,"今日");
+			statRelated.setStartTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getStartTime()),-1),"yyyyMMdd")+"00");
+			statRelated.setEndTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getEndTime()),-1),"yyyyMMdd")+"23");
+			list = this.statRelateService.statsNew(statRelated);
+			JSONObject yesterday = getData(list, xAxis_data,1,"昨日");
+			statRelated.setStartTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getStartTime()),-7),"yyyyMMdd")+"00");
+			statRelated.setEndTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getEndTime()),-7),"yyyyMMdd")+"23");
+			list = this.statRelateService.statsNew(statRelated);
+			JSONObject lastweek = getData(list, xAxis_data,1,"上周同期");
+			statRelated.setStartTime(param.getStartTime().replace("-", "")+"00");
+			statRelated.setEndTime(param.getEndTime().replace("-", "")+"23");
+			statRelated.setGroupBy("");
+			list = this.statRelateService.statsNew(statRelated);
+			param.setNewNum(list.get(0).getNewNum());
+			JSONArray series = new JSONArray();
+			series.add(today);
+			series.add(yesterday);
+			series.add(lastweek);
+			model.addAttribute("series", series);
+		}catch(Throwable e){
+			logger.error("新增统计异常!", e);
+		}
+		model.addAttribute("title", title.toString());
+		model.addAttribute("legend_data", legend_data.toString());
+		model.addAttribute("xAxis_data", getX(xAxis_data));
+		model.addAttribute("statRelate", param);
+		return "modules/stats/statGraphNew";
+	}
+	
+	private String[] getAllGraph(StatRelated statRelated, String[] xAxis_data) {
+		//处理时间，groupby 
+		String startTime = null;
+		String endTime = null;
+		if( statRelated.getStartTime().replace("-", "").replace(" ", "").length()>=10 ){
+			startTime = statRelated.getStartTime().replace("-", "").replace(" ", "").substring(0, 10);
+			endTime = statRelated.getEndTime().replace("-", "").replace(" ", "").substring(0, 10);
+		}else{
+			startTime = statRelated.getStartTime().replace("-", "").replace(" ", "")+"00";
+			endTime = statRelated.getEndTime().replace("-", "").replace(" ", "")+"23";
+		}
+		if( statRelated.getTimeStyle() == 3 ){
+			statRelated.setTimeFt("%Y/%m");
+			xAxis_data = getXAxisByStartEnd(startTime, endTime, 3);	
+		}
+		if( statRelated.getTimeStyle() == 2 ){
+			statRelated.setTimeFt("%Y/%m/%d");
+			xAxis_data = getXAxisByStartEnd(startTime, endTime, 2);
+		}
+		if( statRelated.getTimeStyle() == 1 ){
+			statRelated.setTimeFt("%Y/%m/%d %H");
+			xAxis_data = getXAxisByStartEnd(startTime, endTime, 1);
+		}
+		return xAxis_data;
+	}
+	
+	/**
+	 * @param year
+	 * @param month
+	 * @param day
+	 * @param type 1:小时,2:日,3:月
+	 * @return
+	 */
+	private String[] getXAxisByStartEnd(String start,String end,int type){
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH");
+		Date date = null;
+		Date date1 = null;
+		String[] str = null;
+		try {
+			date = sdf.parse(start);
+			date1 = sdf.parse(end);
+		} catch (ParseException e) {
+			
+		}
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		Calendar cal1 = Calendar.getInstance();
+		cal1.setTime(date1);
+		if( type==3 ){
+			  int c = ( cal1.get(Calendar.YEAR) - cal.get(Calendar.YEAR)) * 12 
+					  + cal1.get(Calendar.MONTH) - cal.get(Calendar.MONTH) + 1;
+			  str = new String[c];
+			  SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy/MM");
+			  if( c>0 ){
+				  str[0] = sdf1.format(cal.getTime());
+				  for(int i=1;i<c;i++){
+					  cal.add(Calendar.MONTH, 1); 
+					  str[i] = sdf1.format(cal.getTime());
+				  }
+			  }
+		}else if( type==2 ){
+		int c = (int)((cal1.getTimeInMillis() -  cal.getTimeInMillis())/(24*60*60*1000))+1;
+			 SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy/MM/dd");
+			 str = new String[c];
+			  if( c>0 ){
+				  str[0] = sdf1.format(cal.getTime());
+				  for(int i=1;i<c;i++){
+					  cal.add(Calendar.DAY_OF_YEAR, 1); 
+					  str[i] = sdf1.format(cal.getTime());
+				  }
+			  }
+		}else if( type==1 ){
+			int c = (int)((cal1.getTimeInMillis() -  cal.getTimeInMillis())/60/60/1000)+1;
+			SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy/MM/dd HH");
+			str = new String[c];
+			if( c>0 ){
+				str[0] = sdf1.format(cal.getTime());
+				for(int i=1;i<c;i++){
+					cal.add(Calendar.HOUR_OF_DAY, 1); 
+					str[i] = sdf1.format(cal.getTime());
+				}
+			}
+		}
+		return str;
+	}
+	
+	/**
+	 * 组装数据
+	 * @param list
+	 * @param time
+	 * @param dataType 1:新增,2:活跃
+	 * @return
+	 */
+	public JSONObject getData(List<StatRelated> list,String[] time,int dataType,String name){
+		int[] data = new int[time.length];
+		for( StatRelated nuser : list ){
+			for(int i=0;i<time.length;i++){
+				if(name.equals("今日")){
+					if(time[i].equals(nuser.getTimeframes())){
+						if(dataType == 1){
+							data[i]=nuser.getNewNum();
+						}
+						if(dataType == 2){
+							data[i]=nuser.getActNum();
+						}
+					}
+				}else if(name.equals("昨日")){
+					if( DateUtils.dateDifference(nuser.getTimeframes(),time[i],1)){
+						if(dataType == 1){
+							data[i]=nuser.getNewNum();
+						}
+						if(dataType == 2){
+							data[i]=nuser.getActNum();
+						}
+					}
+				}else if(name.equals("上周同期")){
+					if( DateUtils.dateDifference(nuser.getTimeframes(),time[i],7) ){
+						if(dataType == 1){
+							data[i]=nuser.getNewNum();
+						}
+						if(dataType == 2){
+							data[i]=nuser.getActNum();
+						}
+					}
+				}
+				if(name.equals("设备活跃")){
+					if(time[i].equals(nuser.getTimeframes())){
+						if(dataType == 1){
+							data[i]=nuser.getActNum();
+						}
+					}
+				}
+			}
+		}
+		JSONObject json = new JSONObject();
+		json.put("data", data);
+		json.put("type", "line");
+		json.put("name", name);
+		return json;
+	}
+	
+	private String getX(String[] str) {
+		StringBuffer sb = new StringBuffer("[");
+		if( str != null ){
+			for(int i=0;i<str.length;i++){
+				sb.append("'").append(str[i]).append("'").append(",");
+			}
+			sb.setLength(sb.length()-1);
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+	
+
+	@RequestMapping("act")
+	public String statAct(StatRelated statRelated,Model model){
+		if ( !Verdict.isAllow(statRelated.getCkAppId())) {
+			return "403";
+		}
+		StatRelated param = null;
+		List<StatRelated> newlist = null;
+		List<StatRelated> actlist = null;
+		List<StatMoney> moneylist = null;
+		List<StatRetention> retentionlist = null;
+		try {
+			statRelated.setGroupCkAppId(1);
+			getSelectStatRelate(statRelated);
+			param = (StatRelated) statRelated.clone();
+			if( StringUtils.isBlank(statRelated.getStartTime()) || StringUtils.isBlank(statRelated.getEndTime()) ){
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(new Date());
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+				cal.add(Calendar.DAY_OF_MONTH, 0);
+				statRelated.setEndTime(sdf.format(cal.getTime()));
+				param.setEndTime(sdf2.format(cal.getTime()));
+				
+				cal.add(Calendar.DAY_OF_MONTH, -3);
+				statRelated.setStartTime(sdf.format(cal.getTime()));
+				param.setStartTime(sdf2.format(cal.getTime()));
+			}else{
+				statRelated.setStartTime(statRelated.getStartTime().replace("-", ""));
+				statRelated.setEndTime(statRelated.getEndTime().replace("-", ""));
+			}
+			//查询新增
+			statRelated.setStartTime(statRelated.getStartTime()+"00");
+			statRelated.setEndTime(statRelated.getEndTime()+"23");
+			statRelated.setTimeFt("%Y%m%d");
+			newlist = statRelateService.statsNew(statRelated);
+			//查询活跃
+			statRelated.setStartTime(statRelated.getStartTime().substring(0, 8));
+			statRelated.setEndTime(statRelated.getEndTime().substring(0, 8));
+			statRelated.setLength(8);
+			statRelated.setAddStr("000000");
+			actlist = statRelateService.statsAct(statRelated);
+			
+			combainData(actlist,newlist);
+			
+			//  拼装充值数据
+			StatMoney statMoney = getStatMoney(statRelated);
+			moneylist = statMoneyService.statsMoney(statMoney);
+			combainMoneyData(actlist,moneylist);
+			
+			// 拼装留存数据
+			StatRetention sr = getStatRetention(statRelated);
+			retentionlist = srdService.statsData(sr);
+			combainRetentionData(actlist,retentionlist);
+		} catch (CloneNotSupportedException e) {
+			logger.error("", e);
+		}
+		model.addAttribute("data", actlist);
+		model.addAttribute("statRelate",param);
+		return "modules/stats/statAct";
+	}
+	
+	private void combainRetentionData(List<StatRelated> actlist, List<StatRetention> retentionlist) {
+		for (StatRelated act : actlist) {
+			for (StatRetention reten : retentionlist) {
+				String ckAppId = act.getCkAppId();
+				String childCkAppId = act.getChildCkAppId();
+				String ckChannelId = act.getCkChannelId();
+				String childChannelId = act.getChildChannelId();
+				if(act.getTimeframes().equals(reten.getRegTime())
+						&& (ckAppId!=null?ckAppId.equals(reten.getCkAppId()):true)
+						&& (childCkAppId!=null?childCkAppId.equals(reten.getChildCkAppId()):true)
+						&& (ckChannelId!=null?ckChannelId.equals(reten.getCkChannelId()):true)
+						&& (childChannelId!=null?childChannelId.equals(reten.getChildChannelId()):true)
+							){
+						act.setReten1(reten.getD1Num());
+						act.setReten7(reten.getD7Num());
+					}
+			}
+		}
+		
+	}
+
+	private StatRetention getStatRetention(StatRelated statRelated) {
+		StatRetention sr = new StatRetention();
+		sr.setStartTime(statRelated.getStartTime().substring(0, 8));
+		sr.setEndTime(statRelated.getEndTime().substring(0, 8));
+		sr.setCkAppId(statRelated.getCkAppId());
+		sr.setGroupCkAppId(statRelated.getGroupCkAppId());
+		sr.setChildCkAppId(statRelated.getChildCkAppId());
+		sr.setGroupChildCkAppId(statRelated.getGroupChildCkAppId());
+		sr.setCkChannelId(statRelated.getCkChannelId());
+		sr.setGroupChannel(statRelated.getGroupChannel());
+		sr.setChildChannelId(statRelated.getChildChannelId());
+		sr.setGroupChildChannel(statRelated.getGroupChildChannel());
+		if( 1 == sr.getGroupCkAppId() ){
+			sr.setGroupBy(sr.getGroupBy()+",ckAppId");
+		}
+		if( 1 == sr.getGroupChildCkAppId() ){
+			sr.setGroupBy(sr.getGroupBy()+",childCkAppId");
+		}
+		if( 1 == sr.getGroupChannel() ){
+			sr.setGroupBy(sr.getGroupBy()+",ckChannelId");
+		}
+		if( 1 == sr.getGroupChildChannel() ){
+			sr.setGroupBy(sr.getGroupBy()+",childChannelId");
+		}
+		return sr;
+	}
+
+	private void combainMoneyData(List<StatRelated> actlist, List<StatMoney> moneylist) {
+		for (StatRelated sr : actlist) {
+			for (StatMoney sm : moneylist) {
+				String ckAppId = sr.getCkAppId();
+				String childCkAppId = sr.getChildCkAppId();
+				String ckChannelId = sr.getCkChannelId();
+				String childChannelId = sr.getChildChannelId();
+				if(sr.getTimeframes().equals(sm.getTimeframes())
+						&& (ckAppId!=null?ckAppId.equals(sm.getCkAppId()):true)
+						&& (childCkAppId!=null?childCkAppId.equals(sm.getChildCkAppId()):true)
+						&& (ckChannelId!=null?ckChannelId.equals(sm.getCkChannelId()):true)
+						&& (childChannelId!=null?childChannelId.equals(sm.getChildChannelId()):true)
+							){
+						sr.setMoney(sm.getMoney());
+						sr.setSuccessMoney(sm.getSuccessMoney());
+						sr.setPayPeopleNum(sm.getPayPeopleNum());
+						sr.setPaySuccessPeople(sm.getPaySuccessPeople());
+						sr.setPayTimes(sm.getPayTimes());
+						sr.setPaySuccessTimes(sm.getPaySuccessTimes());
+					}
+			}
+		}
+		
+	}
+
+	private StatMoney getStatMoney(StatRelated statRelated) {
+		StatMoney statMoney = new StatMoney();
+		statMoney.setStartTime(statRelated.getStartTime().substring(0, 8));
+		statMoney.setEndTime(statRelated.getEndTime().substring(0, 8));
+		statMoney.setLength(8);
+		statMoney.setCkAppId(statRelated.getCkAppId());
+		statMoney.setGroupCkAppId(statRelated.getGroupCkAppId());
+		statMoney.setChildCkAppId(statRelated.getChildCkAppId());
+		statMoney.setGroupChildCkAppId(statRelated.getGroupChildCkAppId());
+		statMoney.setCkChannelId(statRelated.getCkChannelId());
+		statMoney.setGroupChannel(statRelated.getGroupChannel());
+		statMoney.setChildChannelId(statRelated.getChildChannelId());
+		statMoney.setGroupChildChannel(statRelated.getGroupChildChannel());
+		statMoney.setTimeFt("%Y%m%d");
+		if( 1 == statMoney.getGroupCkAppId() ){
+			statMoney.setGroupBy(statMoney.getGroupBy()+",ckAppId");
+		}
+		if( 1 == statMoney.getGroupChildCkAppId() ){
+			statMoney.setGroupBy(statMoney.getGroupBy()+",childCkAppId");
+		}
+		if( 1 == statMoney.getGroupChannel() ){
+			statMoney.setGroupBy(statMoney.getGroupBy()+",ckChannelId");
+		}
+		if( 1 == statMoney.getGroupChildChannel() ){
+			statMoney.setGroupBy(statMoney.getGroupBy()+",childChannelId");
+		}
+		return statMoney;
+	}
+
+	private void combainData(List<StatRelated> actlist, List<StatRelated> newlist) {
+		for (StatRelated statRelated : actlist) {
+			for (StatRelated srd : newlist) {
+				String ckAppId = srd.getCkAppId();
+				String childCkAppId = srd.getChildCkAppId();
+				String ckChannelId = srd.getCkChannelId();
+				String childChannelId = srd.getChildChannelId();
+				if(statRelated.getTimeframes().equals(srd.getTimeframes())
+					&& (ckAppId!=null?ckAppId.equals(statRelated.getCkAppId()):true)
+					&& (childCkAppId!=null?childCkAppId.equals(statRelated.getChildCkAppId()):true)
+					&& (ckChannelId!=null?ckChannelId.equals(statRelated.getCkChannelId()):true)
+					&& (childChannelId!=null?childChannelId.equals(statRelated.getChildChannelId()):true)
+						){
+					statRelated.setNewNum(srd.getNewNum());
+				}
+			}
+		}
+		
+	}
+
+	/**
+	 * 活跃
+	 * @param statRelated
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("graphAct")
+	public String graphicalAct(StatRelated statRelated,Model model){
+		if (!Verdict.isAllow(statRelated.getCkAppId())) {
+			return "403";
+		}
+		StringBuffer title = new StringBuffer();
+		StringBuffer legend_data = new StringBuffer();
+		String[] xAxis_data = null;
+		StatRelated param = null;
+		try{
+			param = (StatRelated) statRelated.clone();
+			if(param.getTimeStyle() == 0){
+				param.setTimeStyle(1);		//默认按小时
+			}
+			if(StringUtils.isBlank(statRelated.getStartTime()) || StringUtils.isBlank(statRelated.getEndTime())){
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(new Date());
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+				cal.add(Calendar.DAY_OF_MONTH, 0);
+				statRelated.setEndTime(sdf.format(cal.getTime()));
+				param.setEndTime(sdf2.format(cal.getTime()));
+				
+				cal.add(Calendar.DAY_OF_MONTH, -3);
+				statRelated.setStartTime(sdf.format(cal.getTime()));
+				param.setStartTime(sdf2.format(cal.getTime()));
+			}else{
+				statRelated.setStartTime(statRelated.getStartTime().replace("-", ""));
+				statRelated.setEndTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(statRelated.getEndTime(), "yyyy-MM-dd"), 1),"yyyyMMdd"));
+			}
+			legend_data.append("['今日','昨日','上周同期']");
+			//处理条件
+			getSelectStatRelate(statRelated);
+			xAxis_data = getAllGraph(param, xAxis_data);
+			statRelated.setTimeFt(param.getTimeFt());
+			if( statRelated.getTimeFt().length() == 6 ){
+				statRelated.setLength(8);
+				statRelated.setAddStr("0000");
+			}
+			if( statRelated.getTimeFt().length() == 8 ){
+				statRelated.setLength(10);
+			}
+			//获取数据
+			List<StatRelated> list = statRelateService.statsAct(statRelated);
+			JSONObject today = getData(list, xAxis_data,2,"今日");
+			statRelated.setStartTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getStartTime()),-1),"yyyyMMdd")+"00");
+			statRelated.setEndTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getEndTime()),-1),"yyyyMMdd")+"23");
+			list = this.statRelateService.statsAct(statRelated);
+			JSONObject yesterday = getData(list, xAxis_data,2,"昨日");
+			statRelated.setStartTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getStartTime()),-7),"yyyyMMdd")+"00");
+			statRelated.setEndTime(DateUtils.formatDate(DateUtils.addDays(DateUtils.parseDate(param.getEndTime()),-7),"yyyyMMdd")+"23");
+			list = this.statRelateService.statsAct(statRelated);
+			JSONObject lastweek = getData(list, xAxis_data,2,"上周同期");
+			statRelated.setStartTime(param.getStartTime().replace("-", "")+"00");
+			statRelated.setEndTime(param.getEndTime().replace("-", "")+"23");
+			statRelated.setGroupBy("");
+			list = this.statRelateService.statsAct(statRelated);
+			param.setActNum(list.get(0).getActNum());
+			JSONArray series = new JSONArray();
+			series.add(today);
+			series.add(yesterday);
+			series.add(lastweek);
+			model.addAttribute("series", series);
+		}catch(Throwable e){
+			logger.error("活跃统计异常!", e);
+		}
+		model.addAttribute("title", title.toString());
+		model.addAttribute("legend_data", legend_data.toString());
+		model.addAttribute("xAxis_data", getX(xAxis_data));
+		model.addAttribute("statRelate", param);
+		return "modules/stats/statGraphAct";
+	}
+}

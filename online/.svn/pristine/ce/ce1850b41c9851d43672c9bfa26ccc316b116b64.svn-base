@@ -1,0 +1,350 @@
+/**
+ * Copyright &copy; 2015-2018 <a href="http://www.ckhd.me/">创酷互动</a> All rights reserved.
+ */
+package me.ckhd.opengame.common.utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Locale;
+import java.util.Map;
+
+import me.ckhd.opengame.common.config.Global;
+
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
+import org.apache.commons.mail.SimpleEmail;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+
+/**
+ * 发送电子邮件
+ * @author wizard
+ */
+public class SendMailUtils {
+
+//	private static Map<String, String> hostMap = new HashMap<String, String>();
+//	static {
+//		// 126
+//		hostMap.put("smtp.126", "smtp.126.com");
+//		// qq
+//		hostMap.put("smtp.qq", "smtp.qq.com");
+//
+//		// 163
+//		hostMap.put("smtp.163", "smtp.163.com");
+//
+//		// sina
+//		hostMap.put("smtp.sina", "smtp.sina.com.cn");
+//
+//		// tom
+//		hostMap.put("smtp.tom", "smtp.tom.com");
+//
+//		// 263
+//		hostMap.put("smtp.263", "smtp.263.net");
+//
+//		// yahoo
+//		hostMap.put("smtp.yahoo", "smtp.mail.yahoo.com");
+//
+//		// hotmail
+//		hostMap.put("smtp.hotmail", "smtp.live.com");
+//
+//		// gmail
+//		hostMap.put("smtp.gmail", "smtp.gmail.com");
+//		hostMap.put("smtp.port.gmail", "465");
+//	}
+//
+//	public static String getSmtpHost(String email) throws Exception {
+//		Pattern pattern = Pattern.compile("\\w+@(\\w+)(\\.\\w+){1,2}");
+//		Matcher matcher = pattern.matcher(email);
+//		String key = "unSupportEmail";
+//		if (matcher.find()) {
+//			key = "smtp." + matcher.group(1);
+//		}
+//		if (hostMap.containsKey(key)) {
+//			return hostMap.get(key);
+//		} else {
+//			throw new Exception("unSupportEmail");
+//		}
+//	}
+//
+//	public static int getSmtpPort(String email) throws Exception {
+//		Pattern pattern = Pattern.compile("\\w+@(\\w+)(\\.\\w+){1,2}");
+//		Matcher matcher = pattern.matcher(email);
+//		String key = "unSupportEmail";
+//		if (matcher.find()) {
+//			key = "smtp.port." + matcher.group(1);
+//		}
+//		if (hostMap.containsKey(key)) {
+//			return Integer.parseInt(hostMap.get(key));
+//		} else {
+//			return 25;
+//		}
+//	}
+
+	/**
+	 * 发送FreeMarker模板邮件
+	 * 
+	 * @param toMailAddr
+	 *            收信人地址
+	 * @param subject
+	 *            email主题
+	 * @param freeMarkerTemplatePath
+	 *            模板地址
+	 * @param map
+	 *            模板map
+	 * @throws EmailException 
+	 * @throws IOException 
+	 * @throws TemplateException 
+	 */
+	public static void sendFtlMail(Config config, String toMailAddr, String subject, 
+			String freeMarkerTemplatePath, Map<String, Object> map) throws EmailException, IOException, TemplateException {
+
+		Configuration freeMarkerConfig = new Configuration();
+		
+		freeMarkerConfig.setDirectoryForTemplateLoading(new File(getFilePath()));
+		// 获取模板
+		Template template = freeMarkerConfig.getTemplate(getFileName(freeMarkerTemplatePath), new Locale("Zh_cn"), "UTF-8");
+		// 模板内容转换为string
+		String message = FreeMarkerTemplateUtils.processTemplateIntoString(template, map);
+		
+		sendHtmlMail(config, toMailAddr, subject, message);
+	}
+
+	/**
+	 * 发送HTML邮件
+	 * 
+	 * @param toMailAddr
+	 *            收信人地址
+	 * @param subject
+	 *            email主题
+	 * @param message
+	 *            发送email信息
+	 * @throws EmailException 
+	 */
+	public static void sendHtmlMail(Config config, String toMailAddr, String subject, String message) throws EmailException {
+		Email mail = new HtmlEmail();
+		mail.setHostName(config.getSmtpHost());
+		mail.setSmtpPort(config.getSmtpPort());
+		mail.setCharset(config.getCharset());
+		mail.addTo(toMailAddr);
+		mail.setFrom(config.getFrom(), config.getFromName());
+		mail.setAuthentication(config.getUsername(), config.getPassword());
+		mail.setSubject(subject);
+		mail.setMsg(message);
+		mail.send();
+	}
+	/**
+	 * 发送普通邮件
+	 * @param config
+	 * @param toMailAddr
+	 * @param subject
+	 * @param message
+	 * @throws EmailException
+	 */
+	public static void sendMail(Config config, String toMailAddr, String subject, String message) throws EmailException {
+		Email mail = new SimpleEmail();
+		mail.setHostName(config.getSmtpHost());
+		mail.setSmtpPort(config.getSmtpPort());
+		mail.setCharset(config.getCharset());
+		mail.addTo(toMailAddr);
+		mail.setFrom(config.getFrom(), config.getFromName());
+		mail.setAuthentication(config.getUsername(), config.getPassword());
+		mail.setSubject(subject);
+		mail.setMsg(message);
+		mail.send();
+	}
+
+//	private static String getHtmlText(String templatePath, Map<String, Object> map) throws IOException, TemplateException {
+//		Configuration freeMarkerConfig = new Configuration();
+//		freeMarkerConfig.setDirectoryForTemplateLoading(new File(getFilePath()));
+//		// 获取模板
+//		Template template = freeMarkerConfig.getTemplate(getFileName(templatePath), new Locale("Zh_cn"), "UTF-8");
+//		// 模板内容转换为string
+//		String htmlText = FreeMarkerTemplateUtils.processTemplateIntoString(template, map);
+//		
+//		return htmlText;
+//	}
+
+	private static String getFilePath() throws UnsupportedEncodingException {
+		String path = getAppPath(SendMailUtils.class);
+		path = path + File.separator + "mailtemplate" + File.separator;
+		path = path.replace("\\", "/");
+		return path;
+	}
+
+	private static String getFileName(String path) {
+		path = path.replace("\\", "/");
+		return path.substring(path.lastIndexOf("/") + 1);
+	}
+
+	private static String getAppPath(Class<?> cls) throws UnsupportedEncodingException {
+		// 检查用户传入的参数是否为空
+		if (cls == null) {
+			throw new java.lang.IllegalArgumentException("参数不能为空！");
+		}
+		ClassLoader loader = cls.getClassLoader();
+		// 获得类的全名，包括包名
+		String clsName = cls.getName() + ".class";
+		// 获得传入参数所在的包
+		Package pack = cls.getPackage();
+		String path = "";
+		// 如果不是匿名包，将包名转化为路径
+		if (pack != null) {
+			String packName = pack.getName();
+			// 此处简单判定是否是Java基础类库，防止用户传入JDK内置的类库
+			if (packName.startsWith("java.") || packName.startsWith("javax.")) {
+				throw new java.lang.IllegalArgumentException("不要传送系统类！");
+			}
+			// 在类的名称中，去掉包名的部分，获得类的文件名
+			clsName = clsName.substring(packName.length() + 1);
+			// 判定包名是否是简单包名，如果是，则直接将包名转换为路径，
+			if (packName.indexOf(".") < 0) {
+				path = packName + "/";
+			} else {// 否则按照包名的组成部分，将包名转换为路径
+				int start = 0, end = 0;
+				end = packName.indexOf(".");
+				while (end != -1) {
+					path = path + packName.substring(start, end) + "/";
+					start = end + 1;
+					end = packName.indexOf(".", start);
+				}
+				path = path + packName.substring(start) + "/";
+			}
+		}
+		// 调用ClassLoader的getResource方法，传入包含路径信息的类文件名
+		java.net.URL url = loader.getResource(path + clsName);
+		// 从URL对象中获取路径信息
+		String realPath = url.getPath();
+		// 去掉路径信息中的协议名"file:"
+		int pos = realPath.indexOf("file:");
+		if (pos > -1) {
+			realPath = realPath.substring(pos + 5);
+		}
+		// 去掉路径信息最后包含类文件信息的部分，得到类所在的路径
+		pos = realPath.indexOf(path + clsName);
+		realPath = realPath.substring(0, pos - 1);
+		// 如果类文件被打包到JAR等文件中时，去掉对应的JAR等打包文件名
+		if (realPath.endsWith("!")) {
+			realPath = realPath.substring(0, realPath.lastIndexOf("/"));
+		}
+		/*------------------------------------------------------------ 
+		 ClassLoader的getResource方法使用了utf-8对路径信息进行了编码，当路径 
+		  中存在中文和空格时，他会对这些字符进行转换，这样，得到的往往不是我们想要 
+		  的真实路径，在此，调用了URLDecoder的decode方法进行解码，以便得到原始的 
+		  中文及空格路径 
+		-------------------------------------------------------------*/
+		realPath = java.net.URLDecoder.decode(realPath, "utf-8");
+		
+		return realPath;
+	}
+	
+	public static class Config {
+		
+		private String from = null;
+		private String fromName = null;
+		private String charset = "utf-8";
+		private String username = null;
+		private String password = null;
+		private String smtpHost = null;
+		private Integer smtpPort = null;
+		
+		public String getFrom() {
+			return from;
+		}
+		public void setFrom(String from) {
+			this.from = from;
+		}
+		public String getFromName() {
+			return fromName;
+		}
+		public void setFromName(String fromName) {
+			this.fromName = fromName;
+		}
+		public String getCharset() {
+			return charset;
+		}
+		public void setCharset(String charset) {
+			this.charset = charset;
+		}
+		public String getUsername() {
+			return username;
+		}
+		public void setUsername(String username) {
+			this.username = username;
+		}
+		public String getPassword() {
+			return password;
+		}
+		public void setPassword(String password) {
+			this.password = password;
+		}
+		public String getSmtpHost() {
+			return smtpHost;
+		}
+		public void setSmtpHost(String smtpHost) {
+			this.smtpHost = smtpHost;
+		}
+		public Integer getSmtpPort() {
+			return smtpPort;
+		}
+		public void setSmtpPort(Integer smtpPort) {
+			this.smtpPort = smtpPort;
+		}
+	}
+
+	public static Config getAliyunMailConfig() {
+		Config config = new Config();
+		config.setCharset( getParameter("mail.aliyun.charset", "utf-8") );
+		config.setFrom( getParameter("mail.aliyun.from", true) );
+		config.setFromName( getParameter("mail.aliyun.fromName", true) );
+		config.setPassword( getParameter("mail.aliyun.password", true) );
+		config.setSmtpHost( getParameter("mail.aliyun.smtpHost", true) );
+		config.setSmtpPort( getParameter("mail.aliyun.smtpPort", 25) );
+		config.setUsername( getParameter("mail.aliyun.username", true) );
+		return config;
+	}
+	
+	private static String getParameter(String key, String defVal) {
+		String val = Global.getConfig(key);
+		return StringUtils.isBlank(val) ? defVal : val;
+	}
+	private static String getParameter(String key, boolean isRequire) throws IllegalArgumentException {
+		String val = getParameter(key, (String) null);
+		if( isRequire && val == null ) {
+			throw new java.lang.IllegalArgumentException("miss config:" + key);
+		}
+		return val;
+	}
+	private static Integer getParameter(String key, Integer defVal) {
+		String val = Global.getConfig(key);
+		return StringUtils.isNumeric(val) ? Integer.valueOf(val) : defVal;
+	}
+	
+	
+	public static void main(String[] args) throws Exception {
+//		Config config = new Config();
+//		config.setCharset("utf-8");
+//		config.setFrom("m13068829579@163.com");
+//		config.setFromName("创酷互动");
+//		config.setPassword("19901028liu");
+//		config.setSmtpHost("smtp.163.com");
+//		config.setSmtpPort(25);
+//		config.setUsername("13068829579@163.com");
+//		
+//		Map<String, Object> map = new HashMap<String, Object>();
+//		map.put("subject", "测试标题");
+//		map.put("content", "测试 内容");
+//		String templatePath = "mailtemplate/test.ftl";
+//		
+//		sendFtlMail(config, "test@163.com", "sendemail test!", templatePath, map);
+
+		//sendMail(getAliyunMailConfig(), "for_development@163.com", "test", "test");
+		String message = "<h2>【创酷互动】恭喜官爷~您已成功领取官网御赐大礼包：<span style='color:#F00'> l3iq6X2xsZUeEqy </span> 。出府后，点击设置-兑换码-输入兑换-邮件领取《叫我官老爷》</h2>";
+		sendHtmlMail(getAliyunMailConfig(), "for_development@163.com", "test", message);
+	}
+
+}

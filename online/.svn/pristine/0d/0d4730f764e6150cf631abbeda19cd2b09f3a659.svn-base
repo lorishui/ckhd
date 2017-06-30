@@ -1,0 +1,88 @@
+// Copyright 2010 Google Inc. All Rights Reserved.
+
+package me.ckhd.opengame.online.handle.common.google;
+
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Security-related methods. For a secure implementation, all of this code
+ * should be implemented on a server that communicates with the
+ * application on the device. For the sake of simplicity and clarity of this
+ * example, this code is included here and is executed on the device. If you
+ * must verify the purchases on the phone, you should obfuscate this code to
+ * make it harder for an attacker to replace the code with stubs that treat all
+ * purchases as verified.
+ */
+public class Security {
+    private static Logger log = LoggerFactory.getLogger(Security.class);
+
+    private static final String KEY_FACTORY_ALGORITHM = "RSA";
+    private static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
+
+    /**
+     * Verifies that the signature from the server matches the computed
+     * signature on the data.  Returns true if the data is correctly signed.
+     *
+     * @param publicKey public key associated with the developer account
+     * @param signedData signed data from server
+     * @param signature server signature
+     * @return true if the data and signature match
+     */
+    public static boolean verify(String publicKey, String signedData, String signature) {
+        log.info( "signature: " + signature);
+        Signature sig;
+        try {
+            sig = Signature.getInstance(SIGNATURE_ALGORITHM);
+            PublicKey key = Security.generatePublicKey(publicKey);
+            sig.initVerify(key);
+            sig.update(signedData.getBytes());
+            if (!sig.verify(Base64.decode(signature))) {
+            	log.info( "Signature verification failed.");
+                return false;
+            }
+            return true;
+        } catch (NoSuchAlgorithmException e) {
+        	log.error( "NoSuchAlgorithmException.",e);
+        } catch (InvalidKeyException e) {
+        	log.error("Invalid key specification.",e);
+        } catch (SignatureException e) {
+        	log.error( "Signature exception.",e);
+        } catch (Base64DecoderException e) {
+        	log.error( "Base64 decoding failed.",e);
+        }
+        return false;
+    }
+    
+    /**
+     * Generates a PublicKey instance from a string containing the
+     * Base64-encoded public key.
+     *
+     * @param encodedPublicKey Base64-encoded public key
+     * @throws IllegalArgumentException if encodedPublicKey is invalid
+     */
+    public static PublicKey generatePublicKey(String encodedPublicKey) {
+        try {
+            byte[] decodedKey = Base64.decode(encodedPublicKey);
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_FACTORY_ALGORITHM);
+            return keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeySpecException e) {
+            log.error( "Invalid key specification.",e);
+            throw new IllegalArgumentException(e);
+        } catch (Base64DecoderException e) {
+        	log.error( "Base64 decoding failed.",e);
+            throw new IllegalArgumentException(e);
+        }
+    }
+}

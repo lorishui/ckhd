@@ -1,0 +1,22 @@
+package me.ckhd.opengame.stats.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import me.ckhd.opengame.common.service.CrudService;
+import me.ckhd.opengame.stats.dao.StatMoneyDao;
+import me.ckhd.opengame.stats.entity.StatMoney;
+
+@Service
+public class StatMoneyService extends CrudService<StatMoneyDao, StatMoney> {
+
+	public List<StatMoney> statsSuccessMoney(StatMoney statMoney) {
+		return dao.statsSuccessMoney(statMoney);
+	}
+
+	public List<StatMoney> statsMoney(StatMoney statMoney) {
+		return dao.statsMoney(statMoney);
+	}
+
+}

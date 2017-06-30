@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.PayCodeConfigDao">
+     <sql id="payCodeConfigColumns">
+        a.id,
+    	a.channelid as channelId,
+    	a.ckappid as ckAppId,
+    	a.childCkAppId,
+		a.version,
+		a.productid as productId,
+		a.name as productName,
+		a.price,
+		a.paytype,
+		e.label as paytypeName,
+		a.remarks,
+		a.exinfo,
+		b.name as channelName,
+		c.name as appName,
+		a.create_by as "createby.id",
+		a.create_date,
+		a.update_by as "updateby.id",
+		a.update_date
+    </sql>
+   
+     <sql id="paymentWayJoins">
+        <!-- -->
+        left join  channel b on b.id=a.channelid
+        left join app_ck c on (c.ckapp_id = a.ckappid AND a.childCkAppId=c.child_Id)
+        left join (select * from sys_dict where type='paytype')
+		e on e.value=a.paytype
+    </sql>
+     
+    <!-- 分页查询运营商app信息 -->
+	<select id="findList" resultType="PayCodeConfig">
+		SELECT
+			<include refid="payCodeConfigColumns"/>
+		FROM  app_online_paycode a 
+			<include refid="paymentWayJoins"/> 
+		WHERE a.del_flag = #{delFlag}
+		<if test="ckAppId != null and ckAppId != ''">
+			AND a.ckappid = #{ckAppId}
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			AND a.childCkAppId = #{childCkAppId}
+		</if>
+		<if test="paytype !=null and paytype !=''">
+		    AND a.paytype =#{paytype}
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND a.channelid = #{channelId}
+		</if>
+		<if test="version != null and version != ''">
+			AND a.version like CONCAT('%', #{version}, '%')
+		</if>
+		<if test="productId != null and productId != ''">
+			AND a.productid  like CONCAT('%', #{productId}, '%')
+		</if>
+		<if test="productName != null and productName != ''">
+			AND a.name like CONCAT('%', #{productName}, '%')
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.ckappid
+			</otherwise>
+		</choose>
+	</select>
+     
+	  <!-- 分页查询运营商app信息 -->
+	<select id="get" resultType="PayCodeConfig">
+		SELECT
+			<include refid="payCodeConfigColumns"/>
+		FROM  app_online_paycode a 
+			<include refid="paymentWayJoins"/> 
+		WHERE a.del_flag = #{delFlag} and a.id=#{id}
+	</select>
+	
+     <insert id="insert">
+         INSERT INTO app_online_paycode(
+			id,
+    		channelId,
+    		ckAppId,
+    		childCkAppId,
+    		appid,
+			version,
+			productId,
+			name,
+			price,
+			paytype,
+			remarks,
+			exInfo,
+			create_date,
+			create_by
+		) VALUES (
+		    #{id},
+			#{channelId}, 
+			#{ckAppId}, 
+			#{childCkAppId},
+			#{appid},
+			#{version}, 
+			#{productId}, 
+			#{productName}, 
+			#{price}, 
+			#{paytype}, 
+			#{remarks}, 
+			#{exInfo}, 
+			#{createDate}, 
+			#{createBy.id}
+		)
+     </insert>
+     
+     <update id="update">
+        UPDATE app_online_paycode 
+        SET version=#{version},
+			productId=#{productId},
+			channelid=#{channelId},
+			name=#{productName},
+			price=#{price},
+			paytype=#{paytype},
+			remarks=#{remarks},
+			exInfo=#{exInfo},
+			update_date=#{updateDate},
+			update_by=#{updateBy.id}
+		WHERE id = #{id}
+     </update>
+     <update id="delete">
+         UPDATE app_online_paycode 
+         SET del_flag = '1'
+         WHERE id = #{id}
+     </update>
+     
+     <!-- 检查是否为唯一 -->
+	<select id="checkOnly" resultType="int">
+		SELECT
+		count(*)
+		FROM app_online_paycode a
+		WHERE a.del_flag = #{delFlag} 
+			AND a.ckappid = #{ckAppId}
+			<if test="childCkAppId != null and childCkAppId != ''">
+				AND a.childCkAppId = #{childCkAppId}
+			</if>
+			<if test="channelId != null and channelId != ''">
+				AND a.channelid = #{channelId}
+			</if>
+			<if test="channelId == null or channelId == ''">
+				AND (a.channelid is null or a.channelid = '')
+			</if>
+			<if test="paytype !=null and paytype !=''">
+			   	AND a.paytype = #{paytype}
+			</if>
+			<if test="paytype ==null or paytype ==''">
+				AND (a.paytype is null or a.paytype = '')			
+			</if>
+			<if test="productId != null and productId != ''">
+				AND a.productid =#{productId}
+			</if>
+			<if test="productId == null or productId == ''">
+				AND (a.productid is null or a.productid = '')
+			</if>
+	</select>
+</mapper>

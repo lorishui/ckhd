@@ -1,0 +1,62 @@
+package me.ckhd.opengame.online.handle;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Component;
+
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.entity.OnlineUser;
+import me.ckhd.opengame.online.handle.common.google.Security;
+
+import com.alibaba.fastjson.JSONObject;
+
+@Component("googleplay")
+public class googleplayHandle extends BaseHandle{
+
+	public int resultCode=2015;
+	public boolean isSuccess=false;
+	
+	@Override
+	public String login(OnlineUser onlineUser, JSONObject codeJson,
+			PayInfoConfig payInfo) {
+		return null;
+	}
+
+	@Override
+	public void parseParamter(String code, HttpServletRequest request,
+			OnlinePay onlinePay) {
+		respData = JSONObject.parseObject(code);
+		if(respData != null && respData.size()>0){
+			JSONObject validationJson = JSONObject.parseObject("validation");
+			onlinePay.setOrderId(respData.getString("orderId"));
+			onlinePay.setPrices(respData.getInteger("prices"));
+			onlinePay.setChannelOrderId(validationJson.getString("orderId"));
+			isSuccess=Security.verify(onlinePay.getPayInfoConfig().getAppkey(), validationJson.getString("validation"), validationJson.getString("sign"));
+		}
+	}
+
+	@Override
+	public String verifyData(OnlinePay onlinePay, JSONObject result,
+			HttpServletResponse response) {
+		onlinePay.setActualAmount(String.valueOf(onlinePay.getPrices()));
+		return null;
+	}
+
+	@Override
+	public String getReturnSuccess() {
+		JSONObject json = new JSONObject();
+		json.put("resultCOde", 0);
+		json.put("errMsg", "SUCCESS");
+		return json.toJSONString();
+	}
+
+	@Override
+	public String getReturnFailure() {
+		JSONObject json = new JSONObject();
+		json.put("resultCOde", resultCode);
+		json.put("errMsg", "验证失败！");
+		return json.toJSONString();
+	}
+}

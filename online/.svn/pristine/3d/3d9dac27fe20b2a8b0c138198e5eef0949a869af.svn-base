@@ -1,0 +1,280 @@
+package me.ckhd.opengame.app.service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import me.ckhd.opengame.app.dao.APPCkDao;
+import me.ckhd.opengame.app.dao.CfgparamDao;
+import me.ckhd.opengame.app.dao.GameVersionDao;
+import me.ckhd.opengame.app.dao.PayCodeConfigDao;
+import me.ckhd.opengame.app.dao.PayInfoConfigDao;
+import me.ckhd.opengame.app.entity.APPCk;
+import me.ckhd.opengame.app.entity.Cfgparam;
+import me.ckhd.opengame.app.entity.GameVersion;
+import me.ckhd.opengame.app.entity.PayCodeConfig;
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.common.persistence.Page;
+import me.ckhd.opengame.common.service.BaseService;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.sys.dao.DictDao;
+
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * APP管理 包括 app、游戏、省份、渠道、开发商等
+ * @author wesley
+ * @version 2015-06-25
+ */
+@Service
+@Transactional(readOnly = true)
+public class AppService extends BaseService implements InitializingBean {
+
+	@Autowired
+	private GameVersionDao gameVersionDao;
+	@Autowired
+	private APPCkDao aPPCkDao;
+	
+	@Autowired
+	private DictDao dictDao;
+
+	@Autowired
+	private PayCodeConfigDao payCodeConfigDao;
+
+	@Autowired
+	private PayInfoConfigDao payInfoConfigDao;
+	
+	@Autowired
+	private CfgparamDao cfgparamDao;
+	// -- Province Service begin --//
+
+	// -- Province Service end --//
+
+	// -- gameversion Service begin --//
+
+	public GameVersion getGameVersion(String id) {
+		return gameVersionDao.get(id);
+	}
+
+	public List<GameVersion> findAllGameVersion(GameVersion game) {
+		return gameVersionDao.findAllList(game);
+	}
+
+	public Page<GameVersion> findGameVersion(Page<GameVersion> page,
+			GameVersion gameVersion) {
+		// 设置分页参数
+		gameVersion.setPage(page);
+		// 执行分页查询
+		page.setList(gameVersionDao.findList(gameVersion));
+		return page;
+	}
+
+	@Transactional(readOnly = false)
+	public void saveGameVersion(GameVersion gameVersion) {
+		if (StringUtils.isBlank(gameVersion.getId())) {
+			gameVersion.preInsert();
+			gameVersionDao.insert(gameVersion);
+		} else {
+			gameVersionDao.update(gameVersion);
+		}
+	}
+
+	@Transactional(readOnly = false)
+	public void deleteGameVersion(GameVersion gameVersion) {
+		gameVersionDao.delete(gameVersion);
+	}
+
+	// -- gameversion Service end --//
+
+	// -- APPCk Service start --//
+
+	public APPCk getAPPCk(String id) {
+		return aPPCkDao.get(id);
+	}
+
+	public APPCk getAPPCkByName(String name) {
+		APPCk aPPCk = new APPCk();
+		aPPCk.setName(name);
+		return aPPCkDao.getByName(aPPCk);
+	}
+
+	public APPCk getAPPCkByAppId(String appid) {
+		APPCk aPPCk = new APPCk();
+		aPPCk.setCkappId(appid);
+		return aPPCkDao.getByAppId(aPPCk);
+	}
+
+	public List<APPCk> findAllAPPCks(APPCk aPPCk) {
+		return aPPCkDao.findAllList(aPPCk);
+	}
+
+	public Page<APPCk> findAPPCk(Page<APPCk> page, APPCk aPPCk) {
+		aPPCk.setPage(page);
+		page.setList(aPPCkDao.findList(aPPCk));
+		return page;
+
+	}
+
+	@Transactional(readOnly = false)
+	public void saveAPPCk(APPCk aPPCk) {
+		if (StringUtils.isBlank(aPPCk.getId())) {
+			aPPCk.preInsert();
+			aPPCkDao.insert(aPPCk);
+		} else {
+			aPPCk.preUpdate();
+			aPPCkDao.update(aPPCk);
+		}
+	}
+
+	@Transactional(readOnly = false)
+	public void deleteAPPCk(APPCk aPPCk) {
+		aPPCkDao.delete(aPPCk);
+	}
+
+	// -- APPCk Service end --//
+
+	public void afterPropertiesSet() throws Exception {
+		// blank
+	}
+	
+	// TODO 网游计费点信息
+
+	/**
+	 * 获取计费点列表
+	 * 
+	 * @param page
+	 * @param payInfoConfig
+	 * @return
+	 */
+	public Page<PayCodeConfig> findPage(Page<PayCodeConfig> page,
+			PayCodeConfig payCodeConfig) {
+		payCodeConfig.setPage(page);
+		page.setList(payCodeConfigDao.findList(payCodeConfig));
+		return page;
+	}
+
+	/**
+	 * 保存支付信息
+	 * 
+	 * @param payInfoConfig
+	 */
+	@Transactional(readOnly = false)
+	public void savePayCodeConfig(PayCodeConfig payCodeConfig) {
+		if (StringUtils.isBlank(payCodeConfig.getId())) {
+			payCodeConfig.preInsert();
+			payCodeConfigDao.insert(payCodeConfig);
+		} else {
+			payCodeConfig.preUpdate();
+			payCodeConfigDao.update(payCodeConfig);
+		}
+	}
+
+	/**
+	 * 删除支付配置信息
+	 * 
+	 * @param payInfoConfig
+	 */
+	@Transactional(readOnly = false)
+	public void delPayCodeConfig(PayCodeConfig payCodeConfig) {
+		payCodeConfigDao.delete(payCodeConfig);
+	}
+
+	/**
+	 * 删除支付配置信息
+	 * 
+	 * @param payInfoConfig
+	 */
+	@Transactional(readOnly = false)
+	public PayCodeConfig getPayCodeConfig(PayCodeConfig payCodeConfig) {
+		return payCodeConfigDao.get(payCodeConfig);
+	}
+
+	/**
+	 * 检测唯一
+	 * @param payCodeConfig
+	 * @return
+	 */
+	public int checkPayCodeOnly(PayCodeConfig payCodeConfig) {
+		return payCodeConfigDao.checkOnly(payCodeConfig);
+	}
+
+	// TODO 网游计费信息
+
+	/**
+	 * 获取支付信息列表
+	 * 
+	 * @param page
+	 * @param payInfoConfig
+	 * @return
+	 */
+	public Page<PayInfoConfig> findPage(Page<PayInfoConfig> page,
+			PayInfoConfig payInfoConfig) {
+		payInfoConfig.setPage(page);
+		page.setList(payInfoConfigDao.findList(payInfoConfig));
+		return page;
+	}
+
+	/**
+	 * 保存支付基本信息
+	 * 
+	 * @param payInfoConfig
+	 */
+	@Transactional(readOnly = false)
+	public void savePayInfoConfig(PayInfoConfig payInfoConfig) {
+		if (StringUtils.isBlank(payInfoConfig.getId())) {
+			payInfoConfig.preInsert();
+			payInfoConfigDao.insert(payInfoConfig);
+		} else {
+			payInfoConfig.preUpdate();
+			payInfoConfigDao.update(payInfoConfig);
+		}
+	}
+
+	/**
+	 * 删除支付配置信息
+	 * 
+	 * @param payInfoConfig
+	 */
+	@Transactional(readOnly = false)
+	public void delPayInfoConfig(PayInfoConfig payInfoConfig) {
+		payInfoConfigDao.delete(payInfoConfig);
+	}
+
+	/**
+	 * 获取支付配置信息
+	 * 
+	 * @param payInfoConfig
+	 */
+	@Transactional(readOnly = false)
+	public PayInfoConfig getPayInfoConfig(PayInfoConfig payInfoConfig) {
+		return payInfoConfigDao.get(payInfoConfig);
+	}
+	
+	/**
+	 * 检测唯一
+	 * @param payCodeConfig
+	 * @return
+	 */
+	public int checkPayInfoOnly(PayInfoConfig payInfoConfig) {
+		return payInfoConfigDao.checkOnly(payInfoConfig);
+	}
+	
+	
+	public List<Cfgparam> findAdList(){
+		return cfgparamDao.findList(new Cfgparam());
+	}
+	
+	public List<Map<String,Object>> getChildIdList(String ckappId){
+		return aPPCkDao.getChildIdList(ckappId);
+	}
+	
+	public String getCkAppNameByChild(String ckappId,String childCkAppId){
+	    Map<String, Object> map = new HashMap<String, Object>();
+	    map.put("childCkAppId", childCkAppId);
+	    map.put("ckappId", ckappId);
+	    return aPPCkDao.getCkAppNameByChild(map);
+	}
+}
