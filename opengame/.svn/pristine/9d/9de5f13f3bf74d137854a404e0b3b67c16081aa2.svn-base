@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.user.dao.UserInfoDao">
+	<!-- 是否存在用户 -->
+	<select id="isExist" resultType="Integer">
+		SELECT COUNT(0) FROM user_account_${n} a WHERE a.userAccount=#{userAccount}
+	</select>
+	
+	<!-- 用户是否绑定邮箱or手机 -->
+	<select id="isBindEmailOrMobile" resultType="UserInfo">
+		SELECT * FROM user_account_${n} a WHERE a.userAccount=#{userAccount}
+	</select>
+	
+   <sql id="userColumns">
+		a.userId,
+		a.userAccount,
+		a.pwd,
+		a.bindMobile,
+		a.bindEmail,
+		a.isUse
+    </sql>
+	
+	<!-- 根据相关信息获得用户 -->
+	<select id="get" resultType="UserInfo">
+		SELECT
+			<include refid="userColumns"/> 
+		FROM user_account_${index} a
+		WHERE a.isUse = 1
+		<if test="userAccount != null and userAccount != ''">
+			and a.userAccount=#{userAccount}
+		</if>
+		<if test="pwd != null and pwd != ''">
+			and a.pwd=#{pwd}
+		</if>
+	</select>
+	
+	<!-- 插入用户 -->
+	<insert id="insert">
+		INSERT INTO user_account_${index}(
+			userId,
+			userAccount,
+			pwd,
+			bindMobile,
+			bindEmail,
+			ckAppId,
+			isUse
+		) VALUES (
+			#{userId},
+			#{userAccount},
+			#{pwd},
+			#{bindMobile},
+			#{bindEmail},
+			#{ckAppId},
+			#{isUse}
+		)
+	</insert>
+	
+	<!-- 更新用户 -->
+	<update id="update">
+		UPDATE user_account_${index} SET 
+		<if test="pwd != null and pwd != ''">
+			pwd = #{pwd}
+		</if>
+		<if test="bindMobile != null ">
+			bindMobile = #{bindMobile}
+		</if>
+		<if test="bindEmail != null ">
+			bindEmail = #{bindEmail}
+		</if>
+		WHERE userAccount = #{userAccount}
+	</update>
+	
+	<!-- 是否存在用户邮箱绑定 -->
+	<select id="isExistEmail" resultType="Integer">
+		SELECT COUNT(0) FROM user_account_bindemail_${index} a WHERE a.bindEmail=#{bindEmail} and a.isUse=1
+	</select>
+	
+	<!-- 更新用户邮箱绑定 -->
+	<update id="updateEmial">
+		UPDATE user_account_bindemail_${index} SET 
+		<if test="bindEmail != null and bindEmail != ''">
+			bindEmail = #{bindEmail}
+		</if>
+		WHERE userAccount = #{userAccount} and a.isUse=1
+	</update>
+	
+	<!-- 插入用户邮箱绑定 -->
+	<insert id="insertEmail">
+		INSERT INTO user_account_bindemail_${index}(
+			bindEmail,
+			userAccount
+		) VALUES (
+			#{bindEmail},
+			#{userAccount}
+		)
+	</insert>
+	
+	<!-- 删除用户邮箱绑定 -->
+	<delete id="deleteEmail">
+		DELETE FROM user_account_bindemail_${index}  WHERE bindEmail=#{bindEmail} and isUse=1
+	</delete>
+	
+	<!-- 更新用户密码-->
+	<update id="updatePass">
+		UPDATE user_account_${index} SET 
+		pwd=#{pwd}
+		WHERE userAccount = #{userAccount}
+	</update>
+	
+	<!-- 获取列表 -->
+	 <select id="findList" resultType="UserInfo">
+    	SELECT <include refid="userColumns" /> FROM(
+			SELECT * FROM user_account_1  
+			UNION ALL SELECT * FROM user_account_2  
+			UNION ALL SELECT * FROM user_account_3  
+			UNION ALL SELECT * FROM user_account_4  
+			UNION ALL SELECT * FROM user_account_5  
+			UNION ALL SELECT * FROM user_account_6 
+			UNION ALL SELECT * FROM user_account_7 
+			UNION ALL SELECT * FROM user_account_8  
+			UNION ALL SELECT * FROM user_account_9 
+			) a
+		WHERE 1=1  
+    	<if test="userAccount != null and userAccount != ''">
+    		and a.userAccount like '%${userAccount}%'
+    	</if> 
+    </select>
+    
+     <select id="getOne" resultType="UserInfo">
+    	SELECT <include refid="userColumns" /> FROM(
+			SELECT * FROM user_account_1  
+			UNION ALL SELECT * FROM user_account_2  
+			UNION ALL SELECT * FROM user_account_3  
+			UNION ALL SELECT * FROM user_account_4  
+			UNION ALL SELECT * FROM user_account_5  
+			UNION ALL SELECT * FROM user_account_6 
+			UNION ALL SELECT * FROM user_account_7 
+			UNION ALL SELECT * FROM user_account_8  
+			UNION ALL SELECT * FROM user_account_9 
+			) a
+		WHERE 1=1  
+    	<if test="userAccount != null and userAccount != ''">
+    		and a.userAccount = #{userAccount}
+    	</if> 
+    </select>
+</mapper>

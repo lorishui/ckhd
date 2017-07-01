@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.AppleUserDao">
+    <insert id="insert">
+    	INSERT INTO t_apple_user(
+			id,
+			ckAppId,
+			deviceToken,
+			version,
+			create_date,
+			update_date
+		) VALUES (
+			#{id},
+			#{ckAppId},
+			#{deviceToken},
+			#{version},
+			#{createDate},
+			#{updateDate}
+		)
+    </insert>
+    
+    <select id="findList" resultType="AppleUser">
+    	SELECT a.`deviceToken`,a.`badge`,a.ckAppId 
+    	FROM `t_apple_user` a 
+    	WHERE a.`ckAppId`=#{ckAppId}
+    	<if test="version != null and version != ''">
+    		and a.version = #{version}
+    	</if>
+    </select>
+    
+    <select id="exist" resultType="java.lang.Integer">
+    	SELECT count(0) num
+    	FROM `t_apple_user` a 
+    	WHERE a.`ckAppId`=#{ckAppId}
+    		and a.version = #{version}
+ 			and a.deviceToken = #{deviceToken}
+    </select>
+    
+    <select id="getBadge" resultType="java.lang.Integer">
+    	SELECT a.badge
+    	FROM `t_apple_user` a 
+    	WHERE a.`ckAppId`=#{ckAppId}
+    		and a.version = #{version}
+ 			and a.deviceToken = #{deviceToken}
+    </select>
+    
+    <update id="update">
+    	UPDATE t_apple_user a SET a.`badge`=#{badge}
+		WHERE a.`ckAppId`=#{ckAppId}
+		AND a.`deviceToken`=#{deviceToken}
+		<if test="version != null and version != ''">
+			AND a.`version`=#{version}
+		</if>
+    </update>
+</mapper>

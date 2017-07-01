@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.hsapi.dao.HsAppOrderDao">
+
+	<insert id="insert">
+		INSERT IGNORE INTO hs_app_order(
+		id,
+		channelId,
+		ckChannelId,
+		ckAppId,
+		mmAppId,
+		imei,
+		imsi,
+		isOnline,
+		appId,
+		fee,
+		paystatus,
+		orderId,
+		HsOrderId,
+		ackType,
+		payCount,
+		create_date,
+		update_date
+		) VALUES (
+		#{id},
+		#{channelId},
+		#{ckChannelId},
+		#{ckAppId},
+		#{mmAppId},
+		#{imei},
+		#{imsi},
+		#{isOnline},
+		#{appId},
+		#{fee},
+		#{paystatus},
+		#{tradeId},
+		#{orderid},
+		#{ackType},
+		#{payCount},
+		#{createDate},
+		#{updateDate}
+		)
+	</insert>
+
+	<!-- 根据业务单号查询HsAppOrder -->
+	<select id="isExitOrderId" parameterType="HsAppOrder" resultType="long">
+		SELECT count(1) as number
+		FROM  hs_app_order
+		WHERE orderId = #{tradeId}
+	</select>
+	
+</mapper>

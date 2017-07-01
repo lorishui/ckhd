@@ -1,0 +1,1 @@
+ALTER TABLE `opengame`.`app_online_pay` ADD COLUMN `isTest` INT(1) DEFAULT 0 NULL COMMENT '0:正式数据,1:测试数据' AFTER `sendErrMsg`; 

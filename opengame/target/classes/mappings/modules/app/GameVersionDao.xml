@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.GameVersionDao">
+    <sql id="gameVersionColumns">
+        a.id,
+    	a.game_id,
+    	a.version,
+		a.name,
+		a.remarks,
+		a.del_flag
+    </sql>
+    
+    <sql id="gameVersionJoins">
+        <!-- -->
+    </sql>
+	
+	<!-- 根据id获得游戏版本 -->
+	<select id="get" resultType="gameVersion">
+		SELECT
+			<include refid="gameVersionColumns"/> 
+		FROM game_version a
+		WHERE a.id = #{id}
+	</select>
+	
+	<!-- 分页查询游戏版本信息 -->
+	<select id="findList" resultType="gameVersion">
+		SELECT
+			<include refid="gameVersionColumns"/>
+		FROM  game_version a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="gameId != null and gameId != ''">
+			AND a.game_id like CONCAT('%', #{gameId}, '%')
+		</if>
+		<if test="name != null and name != ''">
+			AND a.name like CONCAT('%', #{name}, '%') 
+		</if>
+		<if test="version != null and version != ''">
+			AND a.version like CONCAT('%', #{version}, '%') 
+		</if>
+		 
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.game_id
+			</otherwise>
+		</choose>
+	</select>
+	
+	 
+	
+	<!-- 查询全部游戏版本 -->
+	<select id="findAllList" resultType="gameVersion">
+		SELECT
+			<include refid="gameVersionColumns"/>
+		FROM  game_version a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL} 
+	</select>
+	
+	<!-- 查询全部游戏版本数目 -->
+	<select id="findAllCount" resultType="long">
+		SELECT
+			COUNT(1)
+		FROM  game_version a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+	
+	<!-- 插入游戏版本 -->
+	<insert id="insert">
+		INSERT INTO game_version(
+			id,
+			game_id, 
+			version, 
+			name, 
+			remarks, 
+			del_flag
+		) VALUES (
+		    #{id},
+			#{gameId}, 
+			#{version}, 
+			#{name}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+	<!-- 更新游戏版本信息  -->
+	<update id="update">
+		UPDATE  game_version SET 
+			name = #{name}, 
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	<!-- 逻辑删除游戏版本 -->
+	<update id="delete">
+		UPDATE  game_version SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

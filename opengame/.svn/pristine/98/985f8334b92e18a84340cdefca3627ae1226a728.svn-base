@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.gamecode.dao.GameCodeDao">
+	<sql id="GameCodeColumns">
+
+	</sql>
+
+	<sql id="GameCodeJoins">
+		<!-- -->
+	</sql>
+
+
+	<!-- 根据id获得AdPush -->
+	<select id="findGameCodeByCodeAndCkAppId" resultType="GameCode">
+		SELECT
+			id,
+			ckAppId,
+			code,
+			status
+		FROM t_gamecode 
+		WHERE code = #{code}
+		<if test="ckAppId != null and ckAppId != ''">
+			AND ckAppId = #{ckAppId}
+		</if>
+		and status = '0';
+	</select>
+	
+	<select id="get" resultType="GameCode">
+		SELECT
+			id,
+			ckAppId,
+			code,
+			status
+		FROM t_gamecode 
+		WHERE id = #{id};
+	</select>
+
+	<!-- 分页查询GameCode信息 -->
+	<select id="findList" resultType="GameCode">
+		select 
+			CONCAT(b.name,'(',a.ckAppID,')')as ckAppId ,
+			a.code as code , 
+			a.status as status
+		from t_gamecode a 
+		LEFT JOIN app_ck b 
+		on a.ckAppID = b.ckapp_id
+		LEFT JOIN t_gamecode_ver c 
+			on a.verId = c.id
+		where c.status = '0'
+		<if test="ckAppId != null and ckAppId != ''">
+			AND a.ckAppId = #{ckAppId}
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.ckAppId
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	<!-- 分页查询GameCode信息 -->
+	<select id="findGCVList" resultType="GameCodeVer">
+		select 
+			a.id as id,
+			CONCAT(b.name,'(',a.ckapp_id,')')as ckAppId ,
+			a.date as date,
+			a.remark as remark,
+			a.status as status
+		from t_gamecode_ver a 
+		LEFT JOIN app_ck b 
+			on a.ckapp_id = b.ckapp_id
+		where 1 = 1
+		<if test="ckAppId != null and ckAppId != ''">
+			AND a.ckapp_id = #{ckAppId}
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY ckAppId
+			</otherwise>
+		</choose>
+	</select>
+
+
+
+	<!-- 查询全部AdPush -->
+	<!-- <select id="findAllList" resultType="AdPush">
+	SELECT
+	<include refid="AdPushColumns" />
+	FROM t_ad_push a WHERE a.del_flag = #{DEL_FLAG_NORMAL} ORDER BY
+	a.create_time
+	DESC
+</select> -->
+
+
+	<!-- 插入gamecode -->
+	<insert id="insert">
+		INSERT INTO t_gamecode(
+			id,
+			verId,
+			ckAppID,
+			code,
+			status,
+			create_date,
+			create_by
+		) VALUES (
+			#{id},
+			#{verId},
+			#{ckAppId},
+			#{code},
+			#{status},
+			#{date},
+			#{createBy.id}
+		)
+	</insert>
+	
+	<!-- 插入gameCodeVer -->
+	<insert id="saveGameCodeVer">
+		INSERT INTO t_gamecode_ver(
+			id,
+			ckapp_id,
+			date,
+			remark,
+			status
+		) VALUES (
+			#{id},
+			#{ckAppId},
+			#{date},
+			#{remark},
+			#{status}
+		)
+	</insert>
+	
+	
+	<select id="findAllCkApp" resultType="java.util.HashMap"> 
+		SELECT 
+		ckapp_id as appId, 
+		CONCAT(name,'(',ckapp_id,')') as name
+		FROM app_ck WHERE del_flag = '0'
+	</select>
+	
+	<!-- <select id="getCodes" resultType="GameCode"> 
+		SELECT
+			id,
+			ckAppId,
+			code
+		FROM t_gamecode 
+		WHERE status = '0'
+		limit 20
+	</select> -->
+	
+	<select id="getCode" resultType="GameCode"> 
+		SELECT
+			a.id,
+			a.ckAppId,
+			a.code
+		FROM t_gamecode a
+		JOIN t_gamecode_ver b ON a.verId = b.id
+		WHERE a.status = '0'
+		AND b.status = '0'
+		<if test=" ckAppId != null and ckAppId != ''">
+			AND ckAppId = #{ckAppId}
+		</if>
+		limit #{randomInt},1
+	</select>
+	
+	<update id="delete">
+		UPDATE t_gamecode set
+		status = '1'
+		WHERE id = #{id}
+		and status = '0';
+	</update>
+	
+	<update id="updateGCV">
+		UPDATE t_gamecode_ver set
+		status = #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<insert id="log">
+		INSERT INTO t_gamecode_log(
+			id,
+			ckapp_id,
+			code,
+			phone_num,
+			date,
+			status
+		) VALUES (
+			#{id},
+			#{ckAppId},
+			#{code},
+			#{phoneNum},
+			#{date},
+			#{status}
+		)
+	</insert>
+	
+	<!-- 分页查询GameCode信息 -->
+	<select id="checkPhoneNum" resultType="GameCodeLog">
+		SELECT
+			id,
+			ckapp_id as ckAppId,
+			code,
+			phone_num as phoneNum,
+			date,
+			status
+		FROM t_gamecode_log
+		WHERE status = '0'
+		<if test=" phoneNum != null and phoneNum != ''">
+			AND phone_num = #{phoneNum}
+		</if>
+		<if test=" ckAppId != null and ckAppId != ''">
+			AND ckapp_id = #{ckAppId}
+		</if>
+		<if test="startDate != null and startDate != ''">
+			AND date <![CDATA[ >= ]]> #{startDate}
+		</if>
+		<if test="endDate != null and endDate != ''">
+			AND date <![CDATA[ <= ]]> #{endDate}
+		</if>
+	</select>	
+
+</mapper>

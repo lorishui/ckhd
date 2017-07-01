@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.ad.dao.AdResourceDao">
+
+	<insert id="insert">
+		INSERT INTO t_ad_resource(
+			id,
+			uid,
+			adType,
+			resourceType,
+			resourceFormat,
+			url,
+			androidUrl,
+			iosUrl,
+			size,
+			ckAppId,
+			ckChannelId,
+			<!-- gamePackage,
+			province,
+			city,
+			ipArea, -->
+			clickFormat,
+			iosClickFormat,
+			endDate,
+			isUse,
+			iosUse,
+			androidUse
+		) VALUES (
+			#{id},
+			#{uid},
+			#{adType},
+			#{resourceType},
+			#{resourceFormat},
+			#{url},
+			#{androidUrl},
+			#{iosUrl},
+			#{size},
+			#{ckAppId},
+			#{ckChannelId},
+			<!-- #{gamePackage},
+			#{province},
+			#{city},
+			#{ipArea}, -->
+			#{clickFormat},
+			#{iosClickFormat},
+			#{endDate},
+			#{isUse},
+			#{iosUse},
+			#{androidUse}
+		)
+	</insert>
+	
+	<select id="findList" resultType="AdResource">
+		SELECT
+			*
+		FROM  t_ad_resource 
+		where 1=1 
+		<if test="ckAppId != null and ckAppId != ''">
+			and ckAppId=#{ckAppId}
+		</if>
+		<if test="ckChannelId != null and ckChannelId != ''">
+			and ckChannelId=#{ckChannelId}
+		</if> 
+		<if test="adType != null and adType != ''">
+			and adType=#{adType}
+		</if> 
+		<if test="resourceType != null and resourceType != ''">
+			and resourceType=#{resourceType}
+		</if> 
+		<if test="size != null and size != ''">
+			and size=#{size}
+		</if> 
+		<if test="iosUse != null and iosUse != ''">
+			and iosUse=1
+		</if> 
+		<if test="androidUse != null and androidUse != ''">
+			and androidUse=1
+		</if> 
+		order by createDate desc
+	</select>
+	
+	<select id="get" resultType="AdResource">
+		SELECT
+			*
+		FROM  t_ad_resource 
+		where id=#{id}
+	</select>
+	
+	<update id="update">
+		update t_ad_resource set
+			adType=#{adType},
+			resourceType=#{resourceType},
+			resourceFormat=#{resourceFormat},
+			url=#{url},
+			androidUrl=#{androidUrl},
+			iosUrl=#{iosUrl},
+			size=#{size},
+			ckChannelId=#{ckChannelId},
+			clickFormat=#{clickFormat},
+			endDate=#{endDate},
+			isUse=#{isUse},
+			iosUse=#{iosUse},
+			androidUse=#{androidUse}
+		where id=#{id}
+	</update>
+</mapper>

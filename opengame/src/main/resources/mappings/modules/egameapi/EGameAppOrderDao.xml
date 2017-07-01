@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.egameapi.dao.EGameAppOrderDao">
+
+	<insert id="insert">
+		INSERT INTO egame_app_order(
+		id,
+		ckapp_id,
+		cp_order_id,
+		correlator,
+		order_time,
+		result_code,
+		fee,
+		pay_type,
+		method,
+		sign,
+		version
+		)
+		VALUES (
+		#{id},
+		#{ckapp_id},
+		#{cp_order_id},
+		#{correlator},
+		#{order_time},
+		#{result_code},
+		#{fee},
+		#{pay_type},
+		#{method},
+		#{sign},
+		#{version}
+		)
+	</insert>
+
+	<!-- 根据业务单号查询WoAppOrder -->
+	<select id="countByOrderId" parameterType="EGameAppOrder"
+		resultType="long">
+		SELECT count(1) as number
+		FROM egame_app_order
+		WHERE
+		ckapp_id=#{ckapp_id} and cp_order_id = #{cp_order_id}
+	</select>
+</mapper>

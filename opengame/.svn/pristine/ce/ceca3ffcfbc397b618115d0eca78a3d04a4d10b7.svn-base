@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.woapi.dao.WoAppOrderDao">
+
+	<insert id="insert">
+		INSERT INTO wo_app_order(
+		id,
+		ckapp_id,
+		orderid,
+		ordertime,
+		cpid,
+		appid,
+		fid,
+		consumeCode,
+		payfee,
+		payType,
+		hRet,
+		status,
+		callBackContent,
+		create_date,
+		create_by,
+		remarks
+		) VALUES (
+		#{id},
+		(select ckapp_id from app_carriers where app_id=#{appid} and carriers_type='CMPay' limit 0,1),
+		#{orderid},
+		#{ordertime},
+		#{cpid},
+		#{appid},
+		#{fid},
+		#{consumeCode},
+		#{payfee},
+		#{payType},
+		#{hRet},
+		#{status},
+		#{callBackContent},
+		#{createDate},
+		#{createBy},
+		#{remarks}
+		)
+	</insert>
+	
+	
+	
+	<!-- 根据业务单号查询WoAppOrder -->
+	<select id="countByOrderId" parameterType="WoAppOrder" resultType="long">
+		SELECT count(1) as number
+		FROM  wo_app_order
+		WHERE appid=#{appid} and orderid = #{orderid}
+	</select>
+	
+
+</mapper>

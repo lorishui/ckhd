@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.online.dao.TencentCallbackDataDao">
+	<!-- 插入数据-->
+	<insert id="insert">
+		INSERT IGNORE INTO tencent_callback_data(
+		id,
+		orderId,
+		price,
+		data,
+		status,
+		create_date
+		) VALUES (
+		#{id},
+		#{orderId},
+		#{price},
+		#{data},
+		#{status},
+		#{createDate}
+		)
+	</insert>
+	
+	<!-- 更新订单信息 -->
+	<update id="update">
+		UPDATE tencent_callback_data SET
+			status =#{status},
+			sendNum =#{sendNum} 
+		where orderId = #{orderId}
+	</update>
+	
+	<!-- 更新订单信息 -->
+	<select id="getListData" resultType="TencentCallbackData">
+		select id,orderId,data,price,status,sendNum from tencent_callback_data where status=0 and sendNum <![CDATA[<]]> 7 limit 50
+	</select>
+</mapper>

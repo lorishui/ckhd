@@ -1,0 +1,146 @@
+package me.ckhd.opengame.user.web;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.ckhd.opengame.common.persistence.Page;
+import me.ckhd.opengame.common.utils.MD5Util;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.common.web.BaseController;
+import me.ckhd.opengame.sys.service.SystemService;
+import me.ckhd.opengame.user.entity.UserInfo;
+import me.ckhd.opengame.user.service.UserInfoService;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping({"${adminPath}/user/sdkUser"})
+public class SDKUserController extends BaseController{
+
+	@Autowired
+	private UserInfoService userInfoService;
+
+	@RequiresPermissions("user:sdkUser:view")
+	@RequestMapping({"list", ""})
+	public String list(UserInfo userInfo, HttpServletRequest request, HttpServletResponse response, Model model){
+	    Page<UserInfo> page = null;
+	    UserInfo uc = null;
+        try {
+            uc = userInfo.cloneUser();
+        } catch (CloneNotSupportedException e) {
+            logger.error("复制失败！", e);
+        }
+	    if (StringUtils.isNotBlank(userInfo.getUserAccount())) {
+	        setUserIndex(userInfo);
+	        page = this.userInfoService.findPage(new Page<UserInfo>(request, response), userInfo);
+	    } else if (StringUtils.isNotBlank(userInfo.getBindMobile())) {
+	        setUserIndexByMobile(userInfo);
+	        userInfo = userInfoService.getUserByMobile(userInfo);
+	        if (userInfo !=null && StringUtils.isNotBlank(userInfo.getUserAccount())) {
+	            setUserIndex(userInfo);
+	            page = this.userInfoService.findPage(new Page<UserInfo>(request, response), userInfo);
+	        }
+	    } else if (StringUtils.isNotBlank(userInfo.getBindEmail())) {
+	        setUserIndexByEmail(userInfo);
+	        userInfo = userInfoService.getUserByEmail(userInfo);
+	        if (userInfo !=null && StringUtils.isNotBlank(userInfo.getUserAccount())) {
+                setUserIndex(userInfo);
+                page = this.userInfoService.findPage(new Page<UserInfo>(request, response), userInfo);
+            }
+        }
+		model.addAttribute("page", page);
+		model.addAttribute("sdkUser", uc);
+		return "modules/sdkUser/userList";
+	}
+  
+	private void setUserIndexByEmail(UserInfo userInfo) {
+	    String email = userInfo.getBindEmail();
+        char ch = email.charAt(0);
+        userInfo.setIndex(getIndex(ch));
+    }
+
+    private void setUserIndexByMobile(UserInfo userInfo) {
+        String mobile = userInfo.getBindMobile();
+        char ch = mobile.charAt(mobile.length()-1);
+        userInfo.setIndex(getIndex(ch));
+    }
+
+    @RequiresPermissions("user:sdkUser:edit")
+	@RequestMapping("form")
+	public String form(UserInfo userInfo, Model model) {
+        setUserIndex(userInfo);
+		userInfo = (UserInfo)this.userInfoService.getOne(userInfo);
+		model.addAttribute("userInfo", userInfo);
+		return "modules/sdkUser/userForm";
+	}
+	
+	@RequiresPermissions("user:sdkUser:edit")
+	@RequestMapping("save")
+	public String save(UserInfo userInfo, Model model,RedirectAttributes redirectAttributes,
+			HttpServletRequest request,HttpServletResponse response) {
+		if(StringUtils.isNotBlank(userInfo.getUserAccount()) && StringUtils.isNotBlank(userInfo.getPwd()) ){
+			userInfo.setPwd(SystemService.entryptPassword(MD5Util.string2MD5(userInfo.getPwd())));
+			userInfo.setIndex(getIndex(userInfo.getUserAccount().charAt(userInfo.getUserAccount().length()-1)));
+			this.userInfoService.update(userInfo);
+			addMessage(redirectAttributes, "修改密码成功");
+		}else{
+			addMessage(redirectAttributes, "修改密码失败");
+		}
+		return list(userInfo, request, response, model);
+	}
+	
+	public String getIndex(char ch){
+		StringBuffer sb = new StringBuffer();
+		if(ch >=48 && ch <= 57 ){
+			sb.append(ch);
+		}else{
+			int n=ch%10;
+			sb.append(n);
+		}
+		return sb.toString();
+	}
+
+	@RequiresPermissions("user:sdkUser:edit")
+	@RequestMapping("saveUnbind")
+	public String saveUnbind(UserInfo userInfo, Model model,RedirectAttributes redirectAttributes,
+			HttpServletRequest request,HttpServletResponse response) {
+		if(StringUtils.isNotBlank(userInfo.getUserAccount()) && ( StringUtils.isBlank(userInfo.getBindEmail()) || StringUtils.isBlank(userInfo.getBindMobile()) )){
+			String index = getIndex(userInfo.getUserAccount().charAt(userInfo.getUserAccount().length()-1));
+			if (StringUtils.isBlank(userInfo.getBindEmail())) {
+				boolean isSuccess = userInfoService.unBind( userInfo.getUserAccount(), 0, index);
+				if(isSuccess) addMessage(redirectAttributes, "解除绑定成功");
+				else addMessage(redirectAttributes, "解除绑定失败,请查询后再处理");
+			}
+			if (StringUtils.isBlank(userInfo.getBindMobile())) {
+			    boolean isSuccess = userInfoService.unBind( userInfo.getUserAccount(), 1, index);
+                if(isSuccess) addMessage(redirectAttributes, "解除绑定成功");
+                else addMessage(redirectAttributes, "解除绑定失败,请查询后再处理");
+			}
+		}else{
+			addMessage(redirectAttributes, "解除绑定失败");
+		}
+		return list(userInfo, request, response, model);
+	}
+	
+	@RequiresPermissions("user:sdkUser:edit")
+	@RequestMapping("unbind")
+	public String unbind(UserInfo userInfo, Model model) {
+	    if (StringUtils.isNotBlank(userInfo.getUserAccount())) {
+    	    setUserIndex(userInfo);
+    		userInfo = (UserInfo)this.userInfoService.getOne(userInfo);
+    		model.addAttribute("userInfo", userInfo);
+	    }
+		return "modules/sdkUser/unbind";
+	}
+	
+	public void setUserIndex(UserInfo userInfo){
+        String userAccount = userInfo.getUserAccount();
+        char ch = userAccount.charAt(userAccount.length()-1);
+        userInfo.setIndex(getIndex(ch));
+    }
+}

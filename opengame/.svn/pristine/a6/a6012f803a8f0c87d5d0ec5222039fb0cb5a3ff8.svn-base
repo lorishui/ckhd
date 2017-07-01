@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.stats.dao.AndOrderStatsDao">
+    
+     <sql id="AndOrderStatsColumns">
+    	t.ckapp_id,
+    	t.provinceId,
+    	t.channelId,
+		t.contentId,
+		t.consumeCode,
+		t.price,
+		t.hRet,
+		t.status,
+		t.create_date
+    </sql>
+    
+    <!-- 分页查询和游戏流水订单信息 -->
+	<select id="findList" resultType="AndAPPOrder">
+		SELECT
+			<include refid="AndOrderStatsColumns"/>
+		FROM  and_app_order t
+		WHERE 
+		<choose>
+			<when test="contentId != null and contentId != ''">
+			    contentId = #{contentId}
+			</when>
+			<otherwise>
+				ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		  and  t.hRet != '0' and t.create_date  BETWEEN #{beginDate} AND #{endDate} 
+		<if test="channelId != null and channelId != ''">
+			AND channelId = #{channelId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND provinceId = #{provinceId}  
+		</if> 
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY t.create_date desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!--查询版本号  -->
+	<select id="findVersionId" resultType="AndAPPOrder">
+		SELECT DISTINCT(`versionId`) FROM and_app_order 
+		where ckapp_id=#{ckappId} order by versionId DESC 
+	</select>
+	
+	<select id="stats" resultType="java.util.HashMap"  parameterType="AndAPPOrder">
+	SELECT
+	IFNULL(t.mdate,"总计") AS  mdate,
+    t.total_num,
+    t.succ_num,
+    (t.total_num - t.succ_num) AS fail_num,
+    (t.succ_num / t.total_num) AS succ_rate,
+    t.total_price*0.01 AS total_price,
+    t.succ_price *0.01 AS succ_price,
+    (t.total_price - t.succ_price)*0.01 AS fail_price,
+    (t.succ_price / t.total_price) AS succ_price_rate,
+    succ_user_num,error_user_num,user_num
+    
+	FROM
+    	(
+		    SELECT 
+		    DATE_FORMAT(p.create_date, '%Y-%m-%d') AS mdate,
+		    COUNT(0) AS total_num,
+		    COUNT(CASE
+		        WHEN p.hRet = '0' THEN 1
+		        ELSE NULL
+		    END) AS succ_num,
+		    SUM(p.price) AS total_price,
+		    SUM(CASE
+		        WHEN p.hRet = '0' THEN price
+		        ELSE 0
+		    END) AS succ_price,
+		    COUNT(DISTINCT p.userId) AS   user_num,
+		    COUNT(DISTINCT CASE
+		        WHEN p.hRet = '0' THEN  userId
+		        ELSE NULL
+		    END)  AS succ_user_num,
+		     COUNT(DISTINCT CASE
+		        WHEN p.hRet != '0' THEN  userId
+		        ELSE NULL
+		    END)  AS error_user_num
+		    
+		FROM
+		    and_app_order p
+		WHERE
+		<choose>
+			<when test="contentId != null and contentId != ''">
+			    contentId = #{contentId}
+			</when>
+			<otherwise>
+				ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		<if test="versionId != null and versionId != ''">
+			AND versionId = #{versionId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND versionId = #{versionId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND channelId = #{channelId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND provinceId = #{provinceId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and random > #{filterRate}
+		</if>
+		        AND p.create_date BETWEEN #{beginDate} AND #{endDate} 
+		GROUP BY DATE_FORMAT(p.create_date, '%Y-%m-%d') WITH ROLLUP
+    	) AS t 
+	</select>
+	
+	<select id="statsPaycode" resultType="java.util.HashMap"  parameterType="AndAPPOrder">
+	    select  
+	    t.paycode,
+	    t.name,
+	    t.num,
+	    t.success_num,
+	    t.success_price,
+	    t.price AS price
+	    from
+	    (
+			SELECT  
+			a.consumeCode AS paycode,
+			(select name from app_paycode where paycode=a.consumeCode AND carriers_type='ANDGAME') as name,
+			COUNT(0) as num,
+			COUNT(
+			    CASE
+			      WHEN a.hRet = '0' 
+			      THEN 1 
+			      ELSE NULL 
+			    END
+			  ) AS success_num,
+			  
+			  SUM(
+			    CASE
+			      WHEN a.hRet = '0' 
+			      THEN price 
+			      ELSE 0 
+			    END
+			  ) AS   success_price,
+			SUM(a.price) as price
+			FROM and_app_order a
+			WHERE
+			<choose>
+			<when test="contentId != null and contentId != ''">
+			    contentId = #{contentId}
+			</when>
+			<otherwise>
+				ckapp_id = #{ckappId}
+			</otherwise>
+			</choose>
+			<if test="versionId != null and versionId != ''">
+				AND versionId = #{versionId}  
+			</if>
+			<if test="channelId != null and channelId != ''">
+				AND channelId = #{channelId}  
+			</if>
+			<if test="provinceId != null and provinceId != ''">
+				AND provinceId = #{provinceId}  
+			</if>
+			<if test="filterRole != null and filterRole == 10">
+				and random > #{filterRate}
+			</if>
+			and a.create_date BETWEEN #{beginDate} AND #{endDate} 
+			GROUP BY  a.consumeCode 
+			
+		) t	
+	</select>
+		
+	<select id="statsByReturnStatus" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		select 
+		a.status as  returnStatus,
+		b.label as error_name,
+		count(0) as error_num 
+		from and_app_order a 
+		left join  sys_dict b on b.type='andErrorCode' and a.status=b.value
+		where
+		<choose>
+			<when test="contentId != null and contentId != ''">
+			    contentId = #{contentId}
+			</when>
+			<otherwise>
+				ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		<if test="versionId != null and versionId != ''">
+			AND versionId = #{versionId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND a.channelId = #{channelId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND a.provinceId = #{provinceId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and a.random > #{filterRate}
+		</if>
+		and a.hRet !='0'
+		and a.create_date between #{beginDate} and #{endDate} 
+		group by a.status;
+	</select>
+	
+	<select id="queryErrorOrders" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		SELECT 
+		    t.consumeCode as paycode,
+		    (SELECT m.name FROM app_paycode m WHERE m.appid = t.contentId AND m.paycode = t.consumeCode AND m.carriers_type = 'ANDGAME') AS paycode_name,
+		    t.price,
+		    t.status as  returnStatus,
+		    (SELECT label FROM sys_dict WHERE type = 'andErrorCode' AND value = t.status) AS error_name,
+		    t.create_date
+		FROM
+		    and_app_order t
+		WHERE
+		<choose>
+			<when test="contentId != null and contentId != ''">
+			    contentId = #{contentId}
+			</when>
+			<otherwise>
+				ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		  and  t.hRet != '0' and t.create_date  BETWEEN #{beginDate} AND #{endDate} 
+		ORDER BY   t.consumeCode , t.create_date
+		limit 0,10000
+	</select>
+	
+	<select id="statsForAccout" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		SELECT count(DISTINCT userId) allCount,
+			COUNT(DISTINCT CASE
+		        WHEN hRet = '0' THEN  userId
+		        ELSE null
+		    END) AS succ_allCount,
+		    SUM(CASE
+		        WHEN hRet = '0' THEN price
+		        ELSE 0
+		    END) AS succ_allprice,
+			(
+				SELECT
+					count(DISTINCT t1.userId)
+				FROM
+					and_app_order t1
+				WHERE
+					<choose>
+			<when test="contentId != null and contentId != ''">
+			    t1.contentId = #{contentId}
+			</when>
+			<otherwise>
+				t1.ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		<if test="provinceId != null and provinceId != ''">
+			AND t1.provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND t1.channelId = #{channelId}  
+		</if>	
+		<if test="versionId != null and versionId != ''">
+			AND t1.versionId = #{versionId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and random > #{filterRate}
+		</if>
+				AND t1.create_date BETWEEN #{beginDate} AND #{endDate} 
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						and_app_order
+					WHERE
+						ckapp_id = #{ckappId}
+					AND create_date &lt; #{beginDate}
+					AND userId = t1.userId
+					<if test="provinceId != null and provinceId != ''">
+						AND provinceId = #{provinceId}  
+					</if>
+					<if test="channelId != null and channelId != ''">
+						AND channelId = #{channelId}  
+					</if>
+					<if test="filterRole != null and filterRole == 10">
+						and random > #{filterRate}
+					</if>
+				)
+			) oldCount,
+			(
+				SELECT
+					count(DISTINCT CASE
+		        WHEN t2.hRet = '0' THEN  t2.userId
+		        ELSE null
+		    END)
+				FROM
+					and_app_order t2
+				WHERE
+					<choose>
+			<when test="contentId != null and contentId != ''">
+			    t2.contentId = #{contentId}
+			</when>
+			<otherwise>
+				t2.ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		<if test="provinceId != null and provinceId != ''">
+			AND provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND channelId = #{channelId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND t2.versionId = #{versionId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and random > #{filterRate}
+		</if>
+				AND t2.create_date BETWEEN #{beginDate} AND #{endDate} 
+				<if test="provinceId != null and provinceId != ''">
+					AND provinceId = #{provinceId}  
+				</if>
+				<if test="channelId != null and channelId != ''">
+					AND channelId = #{channelId}  
+				</if>
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						and_app_order
+					WHERE
+						ckapp_id = #{ckappId}
+					AND create_date &lt; #{beginDate}
+					AND userId = t2.userId
+					<if test="provinceId != null and provinceId != ''">
+						AND provinceId = #{provinceId}  
+					</if>
+					<if test="channelId != null and channelId != ''">
+						AND channelId = #{channelId}  
+					</if>
+					<if test="filterRole != null and filterRole == 10">
+						and random > #{filterRate}
+					</if>
+				)
+			) succ_oldCount,
+			
+			
+			(
+				SELECT
+					 SUM(CASE
+		        WHEN t3.hRet = '0' THEN t3.price
+		        ELSE 0
+		    END)
+				FROM
+					and_app_order t3
+				WHERE
+					<choose>
+			<when test="contentId != null and contentId != ''">
+			    t3.contentId = #{contentId}
+			</when>
+			<otherwise>
+				t3.ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		<if test="provinceId != null and provinceId != ''">
+			AND t3.provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND t3.channelId = #{channelId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND t3.versionId = #{versionId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and t3.random > #{filterRate}
+		</if>
+				AND t3.create_date BETWEEN #{beginDate} AND #{endDate} 
+				<if test="provinceId != null and provinceId != ''">
+					AND provinceId = #{provinceId}  
+				</if>
+				<if test="channelId != null and channelId != ''">
+					AND channelId = #{channelId}  
+				</if>
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						and_app_order
+					WHERE
+						ckapp_id = #{ckappId}
+					AND create_date &lt; #{beginDate}
+					AND userId = t3.userId
+					<if test="provinceId != null and provinceId != ''">
+						AND provinceId = #{provinceId}  
+					</if>
+					<if test="channelId != null and channelId != ''">
+						AND channelId = #{channelId}  
+					</if>
+					<if test="filterRole != null and filterRole == 10">
+						and random > #{filterRate}
+					</if>
+				)
+			) succ_oldprice
+			 FROM
+					and_app_order
+				WHERE
+		<choose>
+				<when test="contentId != null and contentId != ''">
+			    contentId = #{contentId}
+			</when>
+			<otherwise>
+				ckapp_id = #{ckappId}
+			</otherwise>
+		</choose>
+		<if test="versionId != null and versionId != ''">
+			AND versionId = #{versionId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND channelId = #{channelId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and random > #{filterRate}
+		</if>
+		AND create_date BETWEEN #{beginDate} AND #{endDate} 
+	</select>
+	
+	<!-- 错误码统计  -->
+	<select id="statsByErrorProvince" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		SELECT 
+		  IFNULL(s.label,'') as provinceName,
+		  IFNULL(t.status,'') as status,
+		  IFNULL(d.label,'') as sName,
+		  COUNT(0) errorNum
+		FROM and_app_order t
+		LEFT JOIN sys_dict s ON (s.type='province_andgame' AND t.provinceId = s.value)
+		LEFT JOIN sys_dict d ON (d.type='andErrorCode' AND t.status = d.value)
+		WHERE t.hRet <![CDATA[<>]]> 0
+		<if test="ckappId != null and ckappId != ''">
+			AND t.ckapp_id = #{ckappId}  
+		</if>
+		<if test="contentId != null and contentId != ''">
+			AND t.contentId = #{contentId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND t.versionId = #{versionId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND t.provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND t.channelId = #{channelId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and t.random > #{filterRate}
+		</if>
+		AND t.create_date BETWEEN #{beginDate} AND #{endDate} 
+		GROUP BY t.provinceId,t.status
+		ORDER BY s.sort,d.sort
+	</select>
+	
+	<!-- 按省份统计成功订单率  -->
+	<select id="statsByProvince" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		SELECT 
+		   t.provinceId,
+		   COUNT(0) total_num,
+		   SUM(IF(t.hRet=0,1,0)) succ_num,
+		   SUM(t.price) total_price,
+		   SUM(IF(t.hRet=0,t.price,0)) succ_price
+		FROM
+		  and_app_order t 
+		WHERE  t.create_date BETWEEN #{beginDate} AND #{endDate}
+		<if test="ckappId != null and ckappId != ''">
+			AND t.ckapp_id = #{ckappId}  
+		</if>
+		<if test="contentId != null and contentId != ''">
+			AND t.contentId = #{contentId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND t.versionId = #{versionId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND t.provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND t.channelId = #{channelId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and t.random > #{filterRate}
+		</if>
+		GROUP BY t.provinceId
+	</select>
+	
+	<!-- 按渠道统计成功订单金额  -->
+	<select id="statsByChannel" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		SELECT 
+		   t.channelId,
+		   SUM(t.price) total_price,
+		   SUM(IF(t.hRet=0,t.price,0)) succ_price
+		FROM and_app_order t 
+		WHERE  t.create_date BETWEEN #{beginDate} AND #{endDate}
+		<if test="ckappId != null and ckappId != ''">
+			AND t.ckapp_id = #{ckappId}  
+		</if>
+		<if test="contentId != null and contentId != ''">
+			AND t.contentId = #{contentId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND t.versionId = #{versionId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND t.provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND channelId = #{channelId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and random > #{filterRate}
+		</if>
+		GROUP BY channelId
+	</select>
+	
+	<!-- 按渠道计费点统计成功订单金额  -->
+	<select id="statsByChannelPaycode" parameterType="AndAPPOrder" resultType="java.util.HashMap">
+		SELECT 
+		   t.channelId,
+		   t.consumeCode,
+		   a.name AS payCodeName,
+		   COUNT(0) total_num,
+		   SUM(IF(t.hRet=0,1,0)) succ_num,
+		   SUM(t.price) total_price,
+		   SUM(IF(t.hRet=0,t.price,0)) succ_price
+		FROM and_app_order t 
+		LEFT JOIN app_paycode a ON (t.consumeCode=a.paycode AND a.carriers_type='ANDGAME')
+		where t.create_date BETWEEN #{beginDate} AND #{endDate}
+		<if test="ckappId != null and ckappId != ''">
+			AND t.ckapp_id = #{ckappId}  
+		</if>
+		<if test="contentId != null and contentId != ''">
+			AND t.contentId = #{contentId}  
+		</if>
+		<if test="versionId != null and versionId != ''">
+			AND t.versionId = #{versionId}  
+		</if>
+		<if test="provinceId != null and provinceId != ''">
+			AND t.provinceId = #{provinceId}  
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND t.channelId = #{channelId}  
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and t.random > #{filterRate}
+		</if>
+		GROUP BY t.channelId,t.consumeCode
+	</select>
+	
+	<!-- 封省情况查询 -->
+	<select id="sealProvince" resultType="java.util.HashMap">
+		select 
+			 #{day} AS timest,
+			b.contentId as appid,
+			a.`label` AS provinceName,
+			a.`value` AS provinceId,
+			SUM(IF(b.provinceId IS NULL,0,1)) AS total,
+			SUM(IF(b.`hRet`='0',1,0)) AS successNum,
+			SUM(IF(b.`price` IS NULL,0,b.`price`)) AS totalMoney,
+			SUM(IF(b.`hRet`='0',b.`price`,0)) successMoney,
+			SUM(IF(b.`status`=1124,1,0)) num_1124,
+			MAX(IF(b.`hRet` = '0',b.create_date,NULL)) successMaxTime,
+			MAX(IF(b.`status` = 1124,b.create_date,NULL)) sealMaxTime
+		from `sys_dict` a 
+		left join and_app_order b on ( a.`type`='province_andgame' and b.`provinceId`=a.`value`)
+		WHERE a.`del_flag`=0 and b.create_date >= #{start} AND b.create_date <![CDATA[<=]]> #{end} AND b.`ckapp_id`=#{ckAppId}
+		<if test="contentId != null and contentId != ''">
+			and b.contentId=#{contentId} 
+		</if>
+		GROUP BY a.`value`,b.contentId,b.`ckapp_id`
+	</select>
+	
+	<!-- 封省情况总体查询 -->
+	<select id="sealProvinceTotal" resultType="java.util.HashMap">
+	SELECT 
+	  #{day} AS timest,
+	  COUNT(0) AS total,
+	  SUM(IF(a.`hRet`='0',1,0)) AS successNum,
+	  SUM(a.`price`) AS totalMoney,
+	  SUM(IF(a.`hRet`='0',a.`price`,0)) successMoney
+	FROM `and_app_order` a 
+	LEFT JOIN sys_dict b ON ( a.`provinceId`=b.`value`  AND b.`type` = 'province_andgame') 
+	WHERE a.`create_date` >= #{start} 
+		  AND a.`create_date` <![CDATA[<=]]> #{end}
+		  AND a.`ckapp_id` = #{ckAppId}
+		  <if test="contentId != null and contentId != ''">
+			and a.contentId=#{contentId} 
+		  </if>
+	 </select>
+	 
+	  <select id="statsByCkApp" resultType="java.util.HashMap"  parameterType="AndAPPOrder">
+	SELECT
+	t.mdate  mdate,
+	t.ckapp_id as ckAppId,
+	t.total_price *0.01 as total_price,
+    t.succ_price *0.01 AS succ_price,
+    (t.succ_price / t.total_price) AS succ_price_rate
+	FROM
+    	(
+		    SELECT 
+		    DATE_FORMAT(p.create_date, '%Y-%m-%d') AS mdate,
+		    ckapp_id,
+		    SUM(p.price) AS total_price,
+		    SUM(CASE
+		        WHEN p.hRet = '0' THEN price
+		        ELSE 0
+		    END) AS succ_price
+		    
+		FROM
+		    and_app_order p
+		WHERE 1=1
+		<if test="ckappId != null and ckappId != ''">
+			and ckapp_id = #{ckappId} 
+		</if>
+		<if test="filterRole != null and filterRole == 10">
+			and random > #{filterRate}
+		</if>
+		        AND p.create_date BETWEEN #{beginDate} AND #{endDate} 
+		GROUP BY ckapp_id,DATE_FORMAT(p.create_date, '%Y-%m-%d') 
+    	) AS t 
+	</select>
+	
+</mapper>

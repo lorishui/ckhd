@@ -1,0 +1,140 @@
+package me.ckhd.opengame.common.utils;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import me.ckhd.opengame.online.httpclient.wft.HttpUtils;
+
+import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONObject;
+
+public class SendSmsUtils {
+	static Logger log = LoggerFactory.getLogger(SendSmsUtils.class);
+	static String url = "https://sms.aliyuncs.com/";
+	static String AccessId = "LTAI6rUp22uMPGNl";
+	static String AccessKeySecret = "sCLp4Ju4FrmmrHvuHv4WUTtQ2WaXWi";
+	
+	public static boolean send(String cellphoneNumber,String code){
+		//公共参数
+		String Format="JSON";
+		String Version = "2016-09-27";
+		String Signature="";
+		String SignatureMethod="HMAC-SHA1";
+		String SignatureNonce=getRandomStr(16);
+		String SignatureVersion="1.0";
+		String AccessKeyId=AccessId;
+		String Timestamp=DateUtils.getWorldTime("yyyy-MM-dd'T'hh:mm:ss'Z'");
+		//自定义
+		String Action = "SingleSendSms";
+		String SignName = "创酷互动";
+		String TemplateCode = "SMS_35355003";
+		String RecNum = cellphoneNumber;
+		JSONObject json = new JSONObject();
+		json.put("code", code);
+		String ParamString = json.toJSONString();
+		Map<String,Object> map = new HashMap<String, Object>();
+		try{
+			map.put("Format", URLEncoder.encode(Format,"utf-8"));
+			map.put("Version", URLEncoder.encode(Version,"utf-8"));
+			map.put("SignatureNonce", URLEncoder.encode(SignatureNonce,"utf-8"));
+			map.put("SignatureMethod", URLEncoder.encode(SignatureMethod,"utf-8"));
+			map.put("SignatureVersion", URLEncoder.encode(SignatureVersion,"utf-8"));
+			map.put("AccessKeyId", URLEncoder.encode(AccessKeyId,"utf-8"));
+			map.put("Timestamp", URLEncoder.encode(Timestamp,"utf-8"));
+			map.put("Action", URLEncoder.encode(Action,"utf-8"));
+			map.put("SignName", URLEncoder.encode(SignName,"utf-8"));
+			map.put("TemplateCode", URLEncoder.encode(TemplateCode,"utf-8"));
+			map.put("RecNum", URLEncoder.encode(RecNum,"utf-8"));
+			map.put("ParamString", URLEncoder.encode(ParamString,"utf-8"));
+			Signature = sign(map);
+			map.put("Format", Format);
+			map.put("Version", Version);
+			map.put("SignatureNonce", SignatureNonce);
+			map.put("SignatureMethod", SignatureMethod);
+			map.put("SignatureVersion", SignatureVersion);
+			map.put("AccessKeyId", AccessKeyId);
+			map.put("Timestamp", Timestamp);
+			map.put("Action", Action);
+			map.put("SignName", SignName);
+			map.put("TemplateCode", TemplateCode);
+			map.put("RecNum", RecNum);
+			map.put("ParamString", ParamString);
+			map.put("Signature", Signature);
+		}catch(Throwable a){
+			log.error("sendSms error!", a);;
+		}
+		String reqData = getData(map);
+//		String respData = HttpUtils.post(url, reqData, 10000, 10000,"application/x-www-form-urlencoded");
+		String respData = HttpUtils.post(url, reqData,"application/x-www-form-urlencoded" ,"utf-8");
+		if( StringUtils.isNotBlank(respData) ){
+			JSONObject resp = JSONObject.parseObject(respData);
+			if(resp.containsKey("Code")){
+				return false;
+			}else{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static String sign(Map<String,Object> map){
+		String sign = "";
+		try {
+			String headSql = "POST&%2F&";
+			String param = getSignContent(map);
+			String SignContent = headSql+param;
+			System.out.println(SignContent);
+			sign = CoderUtils.makeSig(SignContent, AccessKeySecret+"&");
+			sign = URLEncoder.encode( sign,"utf-8" );
+		} catch (UnsupportedEncodingException e) {
+			log.error("sendSms error!", e);
+		}
+		return sign;
+	}
+	
+	public static String getSignContent(Map<String,Object> map) throws UnsupportedEncodingException{
+		Object[] obj = map.keySet().toArray();
+		Arrays.sort(obj);
+		StringBuffer sb = new StringBuffer();
+		for(Object key:obj){
+			sb.append(key).append("=").append(map.get(key)).append("&");
+		}
+		if(sb.length() >0){
+			sb.setLength(sb.length()-1);
+		}
+		return URLEncoder.encode(sb.toString(),"utf-8");
+	}
+	
+	public static String getRandomStr(int n){
+		String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		StringBuffer sb = new StringBuffer();
+		for(int i=0;i<n;i++){
+			int m = RandomUtils.nextInt(62);
+			sb.append(str.charAt(m));
+		}
+		return sb.toString();
+	}
+	
+	public static String getData(Map<String,Object> map){
+		Object[] obj = map.keySet().toArray();
+		StringBuffer sb = new StringBuffer();
+		for(Object key:obj){
+			sb.append(key).append("=").append(map.get(key)).append("&");
+		}
+		if(sb.length() >0){
+			sb.setLength(sb.length()-1);
+		}
+		return sb.toString();
+	} 
+	
+	public static void main(String[] args) throws ParseException {
+		send("13068829579", "123456");   
+	}
+}

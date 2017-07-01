@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.AppEventDao">
+    <sql id="eventColumns">
+    	a.id,
+    	a.login_name,
+    	a.password,
+    	a.inner_no,
+		a.name,
+		a.email,
+		a.mobile,
+		a.login_date,
+		a.remarks,
+		a.login_flag,
+		a.create_by AS "createBy.id",
+		a.create_date,
+		a.update_by AS "updateBy.id",
+		a.update_date,
+		a.del_flag
+    </sql>
+    
+	<!-- 插入用户 -->
+	<insert id="insert">
+		INSERT INTO app_event(
+			id, 
+			code, 
+			name, 
+			level, 
+			args, 
+			operate_time, 
+			instore_time, 
+			remarks
+		) VALUES (
+			#{id}, 
+			#{code}, 
+			#{name}, 
+			#{level}, 
+			#{args}, 
+			#{operateTime}, 
+			#{instoreTime}, 
+			#{remarks}
+		)
+	</insert>
+	
+</mapper>

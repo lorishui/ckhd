@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.AppCarriersDao">
+    <sql id="AppCarriersColumns">
+    	a.id,
+    	a.ckapp_id,
+    	a.app_id,
+		b.name,
+		a.app_name,
+		a.carriers_type,
+		a.cp_server_url,
+		a.flow_server_url,
+		a.paycodes,
+		a.forward_by_channel,
+		c.label  AS  "carriersName",
+		a.create_by AS "createBy.id",
+		a.create_date,
+		a.update_by AS "updateBy.id",
+		a.update_date,
+		a.del_flag,
+		a.remarks
+		
+    </sql>
+    
+    <sql id="AppCarriersJoins">
+        <!-- join other tables.-->
+        JOIN app_ck b ON b.ckapp_id = a.ckapp_id
+        LEFT JOIN sys_dict c  ON c.type = 'carriers' and  c.value = a.carriers_type
+        
+    </sql>
+	
+	<!-- 根据id获得运营商app信息 -->
+	<select id="get" resultType="AppCarriers">
+		SELECT
+			<include refid="AppCarriersColumns"/> 
+		FROM app_carriers a
+		    <include refid="AppCarriersJoins"/> 
+		WHERE a.id = #{id}
+	</select>
+	
+	
+ 
+	
+	<!-- 分页查询运营商app信息 -->
+	<select id="findList" resultType="AppCarriers">
+		SELECT
+			<include refid="AppCarriersColumns"/>
+		FROM  app_carriers a
+			<include refid="AppCarriersJoins"/> 
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="ckappId != null and ckappId != ''">
+			AND a.ckapp_id = #{ckappId}
+		</if>
+		<if test="appId != null and appId != ''">
+			AND a.app_id like CONCAT('%', #{appId}, '%')
+		</if>
+		<if test="appName != null and appName != ''">
+			AND a.app_name like CONCAT('%', #{appName}, '%')
+		</if>
+		
+		<if test="name != null and name != ''">
+			AND b.name like CONCAT('%', #{name}, '%')
+		</if>
+		<if test="carriersType != null and carriersType != ''">
+			AND a.carriers_type like CONCAT('%', #{carriersType}, '%')
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.app_id
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 查询全部运营商app信息 -->
+	<select id="findAllList" resultType="AppCarriers">
+		SELECT
+			<include refid="AppCarriersColumns"/>
+		FROM  app_carriers a
+			<include refid="AppCarriersJoins"/> 
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL} 
+	</select>
+	
+	<!-- 查询全部记录数目 -->
+	<select id="findAllCount" resultType="long">
+		SELECT
+			COUNT(1)
+		FROM  app_carriers a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+	
+	<!-- 插入运营商app信息 -->
+	<insert id="insert">
+		INSERT INTO app_carriers(
+			id, 
+			ckapp_id,
+			carriers_type,
+			app_id,
+			app_name,
+			cp_server_url,
+			flow_server_url,
+			paycodes,
+			forward_by_channel,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks, 
+			del_flag
+		) VALUES (
+			#{id}, 
+			#{ckappId},
+			#{carriersType}, 
+			#{appId}, 
+			#{appName},
+			#{cpServerUrl},
+			#{flowServerUrl},
+			#{paycodes},
+			#{forwardByChannel},
+			#{createBy.id}, 
+			#{createDate}, 
+			#{updateBy.id}, 
+			#{updateDate}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+	<!-- 更新运营商app信息-->
+	<update id="update">
+		UPDATE  app_carriers SET 
+			app_id = #{appId}, 
+			app_name = #{appName}, 
+			cp_server_url = #{cpServerUrl},
+			flow_server_url = #{flowServerUrl},
+			paycodes = #{paycodes},
+			forward_by_channel = #{forwardByChannel},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}, 
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 逻辑删除运营商app信息 -->
+	<update id="delete">	
+		UPDATE  app_carriers SET 
+			del_flag = #{DEL_FLAG_DELETE} 
+		WHERE id = #{id}
+	</update>
+	
+	
+	
+	
+	<!--***************************** paycode************************************* -->
+	
+	<!-- 根据id获得运营商app计费点信息 -->
+	<select id="getPaycode" resultType="Paycode">
+		SELECT
+		a.id,
+    	a.appid,
+		a.name,
+		b.app_name,
+		a.paycode,
+		a.price,
+		a.paytype,
+		a.carriers_type,
+		c.label  AS  "carriersName",
+		a.create_by AS "createBy.id",
+		a.create_date,
+		a.update_by AS "updateBy.id",
+		a.update_date,
+		a.del_flag,
+		a.remarks
+		FROM  app_paycode a
+		left join  app_carriers b on b.app_id=a.appid and 
+								a.carriers_type=b.carriers_type and 
+								b.del_flag= #{DEL_FLAG_NORMAL}
+		LEFT JOIN sys_dict c  ON c.type = 'carriers' and  c.value = a.carriers_type
+		WHERE a.id = #{id}
+	</select>
+	
+	
+	
+	
+	<!-- 验证paycode -->
+	<select id="getByPaycodeAndCarriersType"  resultType="java.lang.Boolean">
+		SELECT CASE WHEN count(0) > 0 THEN 1 ELSE 0 END  as isExists  FROM  app_paycode a
+		WHERE   a.carriers_type = #{carriersType}
+		and a.paycode = #{paycode}
+	</select>
+	
+   <!-- 验证getPaycodeName -->
+	<select id="getPaycodeName"  resultType="java.lang.String">
+		SELECT name   FROM  app_paycode a
+		WHERE   a.carriers_type = #{carriersType} and a.paycode = #{paycode}
+	</select>
+	
+	<!-- 分页查询运营商app计费点信息 -->
+	<select id="findPaycodeList" resultType="Paycode">
+		SELECT
+		a.id,
+    	a.appid,
+		a.name,
+		b.app_name,
+		a.paycode,
+		a.price,
+		a.paytype,
+		a.carriers_type,
+		c.label  AS  "carriersName",
+		a.create_by AS "createBy.id",
+		a.create_date,
+		a.update_by AS "updateBy.id",
+		a.update_date,
+		a.del_flag,
+		a.remarks
+		FROM  app_paycode a
+		left join  app_carriers b on b.app_id=a.appid and 
+								a.carriers_type=b.carriers_type and 
+								b.del_flag= #{DEL_FLAG_NORMAL}
+		LEFT JOIN sys_dict c  ON c.type = 'carriers' and  c.value = a.carriers_type
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		
+		<if test="paycode != null and paycode != ''">
+			AND a.paycode like CONCAT('%', #{paycode}, '%')
+		</if>
+		<if test="name != null and name != ''">
+			AND a.name like CONCAT('%', #{name}, '%')
+		</if>
+		<if test="appId != null and appId != ''">
+			AND a.appid like CONCAT('%', #{appId}, '%')
+		</if>
+		<if test="appName != null and appName != ''">
+			AND b.app_name like CONCAT('%', #{appName}, '%')
+		</if>
+		<if test="carriersType != null and carriersType != ''">
+			AND (a.carriers_type like CONCAT('%', #{carriersType}, '%')
+			       or c.label like CONCAT('%', #{carriersType}, '%'))
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.id
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	
+	<!-- 删除计费点信息 -->
+	<update id="deletePaycode">
+		delete from   app_paycode  
+		WHERE id = #{id}
+	</update>
+	
+	
+	
+	<!-- 更新运营商app计费点信息-->
+	<update id="updatePaycode">
+		UPDATE  app_paycode SET 
+			name=#{name}, 
+			paycode=#{paycode},
+			price=#{price},
+			paytype=#{paytype},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}, 
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	<!-- 插入运营商app计费点信息 -->
+	<insert id="insertPaycode">
+		INSERT INTO app_paycode(
+			id, 
+			paycode,
+			name,
+			price,
+			paytype,
+			carriers_type,
+			appid,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks, 
+			del_flag
+		) VALUES (
+			#{id}, 
+			#{paycode},
+			#{name},
+			#{price},
+			#{paytype},
+			#{carriersType}, 
+			#{appId}, 
+			#{createBy.id}, 
+			#{createDate}, 
+			#{updateBy.id}, 
+			#{updateDate}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+</mapper>

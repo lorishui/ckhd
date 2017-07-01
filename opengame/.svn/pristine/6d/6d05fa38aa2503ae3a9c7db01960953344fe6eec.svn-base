@@ -1,0 +1,62 @@
+package me.ckhd.opengame.online.handle;
+
+import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.common.utils.StringUtils;
+import me.ckhd.opengame.online.entity.OnlinePay;
+import me.ckhd.opengame.online.entity.OnlineUser;
+
+import org.springframework.stereotype.Component;
+
+import com.alibaba.fastjson.JSONObject;
+
+@Component("huawei")
+public class huaweiHandle extends BaseHandle{
+	
+	@Override
+	public String login(OnlineUser onlineUser, JSONObject codeJson,
+			PayInfoConfig payInfo) {
+		return null;
+	}
+
+	@Override
+	public void parseParamter(String code, HttpServletRequest request,
+			OnlinePay onlinePay) {
+		/*@SuppressWarnings("unchecked")
+		Set<String> set = request.getParameterMap().keySet();
+		for( String key : set ){
+			respData.put(key, request.getParameter(key));
+		}
+		if(respData.size() > 0){
+			onlinePay.setOrderId(respData.getString("requestId"));
+			onlinePay.setActualAmount(respData.containsKey("amount")?((int)(respData.getDouble("amount")*100))+"":"0");
+			onlinePay.setCallBackContent(StringUtils.isNotBlank(code)?code:respData.toJSONString());
+			onlinePay.setChannelOrderId(respData.getString("orderId"));
+		}*/
+	}
+
+	@Override
+	public String verifyData(OnlinePay onlinePay, JSONObject result,
+			HttpServletResponse response) {
+		return null;
+	}
+
+	@Override
+	public String getReturnSuccess() {
+		JSONObject json = new JSONObject();
+		json.put("result", 0);
+		return json.toJSONString();
+	}
+
+	@Override
+	public String getReturnFailure() {
+		JSONObject json = new JSONObject();
+		json.put("result", 0);
+		return json.toJSONString();
+	}
+
+}

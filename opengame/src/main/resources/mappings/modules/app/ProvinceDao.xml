@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.ProvinceDao">
+    <sql id="provinceColumns">
+    	a.id,
+    	a.code,
+		a.name,
+		a.remarks,
+		a.del_flag
+    </sql>
+    
+    <sql id="provinceJoins">
+        <!-- -->
+    </sql>
+	
+	<!-- 根据id获得省份 -->
+	<select id="get" resultType="province">
+		SELECT
+			<include refid="provinceColumns"/> 
+		FROM province a
+		WHERE a.id = #{id}
+	</select>
+	
+	<!-- 根据编码获得省份 -->
+	<select id="getByCode" resultType="province">
+		SELECT
+			<include refid="provinceColumns"/> 
+		FROM province a
+		WHERE a.code = #{code}
+	</select>
+	
+	<!-- 根据名称查询省份 -->
+	<select id="getByName" resultType="province" parameterType="province">
+		SELECT
+			<include refid="provinceColumns"/> 
+		FROM  province a
+		WHERE a.name = #{name} AND a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+	
+	<!-- 分页查询省份信息 -->
+	<select id="findList" resultType="province">
+		SELECT
+			<include refid="provinceColumns"/>
+		FROM  province a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="code != null and code != ''">
+			AND a.code like CONCAT('%', #{code}, '%')
+		</if>
+		<if test="name != null and name != ''">
+			AND a.name like CONCAT('%', #{name}, '%')
+		</if>
+		 
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.code
+			</otherwise>
+		</choose>
+	</select>
+	
+	 
+	
+	<!-- 查询全部省份 -->
+	<select id="findAllList" resultType="province">
+		SELECT
+			<include refid="provinceColumns"/>
+		FROM  province a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL} 
+	</select>
+	
+	<!-- 查询全部省份数目 -->
+	<select id="findAllCount" resultType="long">
+		SELECT
+			COUNT(1)
+		FROM  province a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+	
+	<!-- 插入省份 -->
+	<insert id="insert">
+		INSERT INTO province(
+			id, 
+			code, 
+			name, 
+			remarks, 
+			del_flag
+		) VALUES (
+			#{id}, 
+			#{code}, 
+			#{name}, 
+			#{remarks}, 
+			#{delFlag}
+		)
+	</insert>
+	<!-- 更新省份信息  -->
+	<update id="update">
+		UPDATE  province SET 
+			name = #{name}, 
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+ 
+	
+ 
+	
+	<!-- 逻辑删除省份 -->
+	<update id="delete">
+		UPDATE  province SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>
