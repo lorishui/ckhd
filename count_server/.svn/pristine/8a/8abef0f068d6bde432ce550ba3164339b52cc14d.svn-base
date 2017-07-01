@@ -1,0 +1,37 @@
+package com.chkd.count.count.task;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import com.alibaba.fastjson.JSONObject;
+import com.chkd.count.common.utils.LogUtils;
+
+public class TaskList {
+	private static List<JSONObject> list = new ArrayList<JSONObject>();
+	
+	public static List<JSONObject> getCountList(){
+		init();
+		return list;
+	}
+	
+	public static void init(){
+		if(list.size()==0){
+			Properties pro = new Properties();
+			try {
+				LogUtils.log.info("读取配置文件");
+				pro.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("countlist.properties"));
+				String name = pro.getProperty("name");
+				LogUtils.log.info("配置文件内容:"+name);
+				String[] countArr = name.split(",");
+				for(String key:countArr){
+					JSONObject json = new JSONObject();
+					json.put("countName", key);
+					list.add(json);
+				}
+			} catch (Throwable e) {
+				LogUtils.log.error("导入任务模块的配置文件出现问题!",e);
+			}
+		}
+	}
+}
