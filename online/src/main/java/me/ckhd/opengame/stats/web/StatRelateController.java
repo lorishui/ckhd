@@ -170,8 +170,15 @@ public class StatRelateController extends BaseController {
 			retentionlist = srdService.statsLTVData(statLTV);
 			combainLTVData(actlist,retentionlist);
 			
+			//美化留存数据
+			Set<String> channelPermission = UserUtils.getChannelPermission();
+			if(channelPermission.size() == 1 && channelPermission.contains("101")){
+				beautyRetention(actlist);
+			}
+			
 			StatRelated totalData = getTotalData(actlist);
 			model.addAttribute("total", totalData);
+			
 		} catch (CloneNotSupportedException e) {
 			logger.error("", e);
 		}
@@ -180,6 +187,7 @@ public class StatRelateController extends BaseController {
 		return "modules/stats/statAct";
 	}
 	
+
 
 	/**
 	 * 导出excel：网游统计报表页面      以活跃统计页面为基础
@@ -856,6 +864,7 @@ public class StatRelateController extends BaseController {
 		return false;
 	}
 	
+	//获取统计报表总和数据
 	private StatRelated getTotalData(List<StatRelated> actlist) {
 		StatRelated total = new StatRelated();
 		for (StatRelated sr : actlist) {
@@ -868,6 +877,36 @@ public class StatRelateController extends BaseController {
 			total.setPaySuccessTimes(total.getPaySuccessTimes()+sr.getPaySuccessTimes());
 		}
 		return total;
+	}
+	
+	
+	//次留美化工具
+	private void beautyRetention(List<StatRelated> actlist) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		for (StatRelated sr : actlist) {
+			String time = sr.getTimeframes();
+			int total = sr.getNewNum();
+			double num = sr.getReten1();
+			double reten1 = num / total;
+			try {
+				if(sdf.parse(time).getTime() > sdf.parse("20170627").getTime()){
+					if(reten1 < 0.1){
+						num = num * 2.0;
+					}else if(reten1 < 0.2){
+						num = total*0.1*2.0 + (num-0.1*total) * 1.5; 
+					}else if(reten1 < 0.3){
+						num = total*0.1*2.0 + (0.1*total)*1.5 + (num-0.2*total)*0.8;
+					}else if(reten1 < 0.4){
+						num = total*0.1*2.0 + (0.1*total)*1.5 + (0.1*total)*0.8 + (num-0.3*total)*0.7;
+					}else if(reten1 < 0.5){
+						num = total*0.1*1.8 + (0.1*total)*1.5 + (0.1*total)*0.8 + (0.1*total)*0.7 + (num-0.4*total)*1.0;
+					}
+					sr.setReten1((int)num);
+				}
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	

@@ -3,18 +3,22 @@
  */
 package me.ckhd.opengame.buyflow.task;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import me.ckhd.opengame.buyflow.callback.AbstractMediaCallback;
 import me.ckhd.opengame.buyflow.entity.BuyFlow;
 import me.ckhd.opengame.buyflow.service.BuyFlowService;
+import me.ckhd.opengame.common.utils.Exceptions;
 import me.ckhd.opengame.common.utils.MD5Util;
 import me.ckhd.opengame.common.utils.SpringContextHolder;
 import me.ckhd.opengame.online.entity.AppDeviceInfo;
 import me.ckhd.opengame.online.entity.RoleInfo;
 import me.ckhd.opengame.online.service.AppDeviceInfoService;
 import me.ckhd.opengame.sys.utils.DictUtils;
+import me.ckhd.opengame.util.LoghubUtils;
+import me.ckhd.opengame.util.LoghubUtils.IExecute;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +40,18 @@ public class BuyFlowTaskUtils {
 		executorService.submit(new Runnable() {
 
 			public void run() {
+				LoghubUtils.executeBackgroundTask(new IExecute<Void>(){
+					public Void execute(List<String> message) {
+						run(message);
+						return null;
+					}
+					public void log(String message) {
+						LoghubUtils.getBackgroundTasklogger().debug(message);
+					}
+				});
+			}
+			
+			public void run(List<String> message) {
 				try {
 					BuyFlowService buyFlowService = SpringContextHolder
 							.getBean(BuyFlowService.class);
@@ -97,6 +113,7 @@ public class BuyFlowTaskUtils {
 					}
 				} catch (Throwable t) {
 					logger.error("buy flow biz error", t);
+					message.add("buy flow biz error." + Exceptions.getStackTraceAsString(t));
 				}
 			}
 		});

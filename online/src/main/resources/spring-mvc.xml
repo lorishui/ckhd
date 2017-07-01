@@ -64,6 +64,19 @@
 			<mvc:mapping path="/**" />
 			<bean class="me.ckhd.opengame.sys.interceptor.MobileInterceptor" />
 		</mvc:interceptor>
+		<mvc:interceptor>
+			<!--
+			<mvc:mapping path="/netpay/**" />
+			<mvc:mapping path="/online/app/**" />
+			<mvc:mapping path="/online/game/**" />
+			<mvc:mapping path="/online/init/**" />
+			<mvc:mapping path="/online/channel/**" />
+			-->
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="${adminPath}/**" />
+			<mvc:exclude-mapping path="/static/**" />
+			<bean class="me.ckhd.opengame.sys.interceptor.LoghubInterceptor" />
+		</mvc:interceptor>
 	</mvc:interceptors>
 	
 	<!-- 支持Shiro对Controller的方法级AOP安全控制 begin-->

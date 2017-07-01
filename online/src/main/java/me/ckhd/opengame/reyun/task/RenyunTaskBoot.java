@@ -1,5 +1,6 @@
 package me.ckhd.opengame.reyun.task;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import me.ckhd.opengame.common.utils.SendMailUtil;
 import me.ckhd.opengame.common.utils.SpringContextHolder;
+import me.ckhd.opengame.util.LoghubUtils;
+import me.ckhd.opengame.util.LoghubUtils.IExecute;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +67,17 @@ public class RenyunTaskBoot implements Runnable{
      * 任务处理线程
      */
     public void run() {
+    	LoghubUtils.executeBackgroundTask(new IExecute<Void>(){
+			public Void execute(List<String> message) {
+				run(message);
+				return null;
+			}
+			public void log(String message) {
+				LoghubUtils.getBackgroundTasklogger().debug(message);
+			}
+    	});
+    }
+    public void run(List<String> message) {
         try{
             Integer num = renyunSDKimpl.payment(data);
             if (num.equals(2)) {

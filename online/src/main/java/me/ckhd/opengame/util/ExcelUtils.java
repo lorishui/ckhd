@@ -23,6 +23,11 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+/**
+ * 
+ * @author wizard
+ *
+ */
 public class ExcelUtils {
 	
 	public static void write(InputStream is, OutputStream os, Config config, List<Map<String, Object>> data) throws IOException {
