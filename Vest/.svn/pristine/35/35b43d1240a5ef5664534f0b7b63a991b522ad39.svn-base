@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.stats.dao.StatMoneyDao">
+	
+	<select id="statsMoney" resultType="StatMoney">
+			SELECT
+			timeframe AS timeframes,
+				ckAppId,
+				childCkAppId,
+				ckChannelId,
+				childChannelId,
+				SUM(money) AS money,
+				SUM(successMoney) AS successMoney,
+				SUM(payPeopleNum) AS payPeopleNum,
+				SUM(paySuccessPeopleNum) AS paySuccessPeople,
+				SUM(payTimes) AS payTimes,
+				SUM(paySuccessTimes) AS paySuccessTimes
+			FROM
+				count_money_device a
+			where a.timeframe>='${startTime}' and a.timeframe<![CDATA[<=]]>'${endTime}'
+			AND length(a.timeframe) = ${length}
+		<if test="ckAppId != null and ckAppId != ''">
+			and ckAppId = #{ckAppId}
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			and childCkAppId = #{childCkAppId}
+		</if>
+		<if test="ckChannelId != null and ckChannelId != ''">
+			and ckChannelId = #{ckChannelId}
+		</if>
+		<if test="childChannelId != null and childChannelId != ''">
+			and childChannelId = #{childChannelId}
+		</if>
+		
+		<if test="permissionChannel != null and permissionChannel != ''">
+			and ckChannelId in (${permissionChannel})
+		</if>
+		<if test="permissionCkAppId != null and permissionCkAppId != ''">
+			and ckAppId in (${permissionCkAppId})
+		</if>
+		<if test="permissionCkAppChildId != null and permissionCkAppChildId.size() > 0">
+			and concat(ckAppId,'_',childCkAppId) in 
+			<foreach collection="permissionCkAppChildId" index="index" item="item" open="(" separator="," close=")">#{item}</foreach> 
+		</if>
+
+		<if test="groupBy != null and groupBy != ''">
+			group by ${groupBy}
+		</if>
+	</select>
+	<select id="statsSuccessMoney" resultType="StatMoney">
+			SELECT
+			DATE_FORMAT(CONCAT(timeframe,'0000'),#{timeFt}) AS timeframes,
+				ckAppId,
+				childCkAppId,
+				ckChannelId,
+				childChannelId,
+				SUM(money) AS money,
+				SUM(successMoney) AS successMoney,
+				SUM(payPeopleNum) AS payPeopleNum,
+				SUM(paySuccessPeopleNum) AS paySuccessPeople,
+				SUM(payTimes) AS payTimes,
+				SUM(paySuccessTimes) AS paySuccessTimes
+			FROM
+				count_money_device a
+			where a.timeframe>='${startTime}' and a.timeframe<![CDATA[<=]]>'${endTime}'
+			AND length(a.timeframe) = ${length}
+		<if test="ckAppId != null and ckAppId != ''">
+			and ckAppId = #{ckAppId}
+		</if>
+		<if test="permissionCkAppId != null and permissionCkAppId != ''">
+			and ckAppId in (${permissionCkAppId})
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			and childCkAppId = #{childCkAppId}
+		</if>
+		<if test="ckChannelId != null and ckChannelId != ''">
+			and ckChannelId = #{ckChannelId}
+		</if>
+		<if test="permissionChannel != null and permissionChannel != ''">
+			and ckChannelId in (${permissionChannel})
+		</if>
+		<if test="childChannelId != null and childChannelId != ''">
+			and childChannelId = #{childChannelId}
+		</if>
+		<if test="groupBy != null and groupBy != ''">
+			group by ${groupBy}
+		</if>
+	</select>
+	
+	
+</mapper>

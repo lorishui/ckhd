@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.query.service.QueryService">
+	<select id="noviceTaskRatio" resultType="me.ckhd.opengame.query.web.StatsNoviceTaskRatioController$NoviceTaskRatioResult">
+		select sdk.cd as cd,
+			   sdk.ct as ct_role,
+			   event.ct as ct_event,
+			   event.ct/sdk.ct as ratio
+		  from(
+		SELECT cd, count(1) AS ct
+		  FROM(
+		SELECT date_format(createDate, '%Y%m%d') AS cd
+		  FROM sdk_user_role
+		 WHERE 1=1
+		 <if test="ckAppId != null and ckAppId != ''">
+		   AND ckAppId= ${ckAppId}
+		 </if>
+		 <if test="begTime != null and begTime != ''">
+		   AND createDate <![CDATA[>=]]> '${begTime}'
+		 </if>
+		 <if test="endTime != null and endTime != ''">
+		   AND createDate <![CDATA[< ]]>  '${endTime}'
+		 </if>
+		 <if test="ckChannelId != null and ckChannelId != ''">
+		   AND ckChannelId= ${ckChannelId}
+		 </if>
+		   ) T
+		 GROUP BY cd) sdk
+		  left join(
+		SELECT cd, count(1) AS ct
+		  FROM(
+		SELECT date_format(createDate, '%Y%m%d') AS cd
+		  FROM event_user_role
+		 WHERE 1=1
+		 <if test="ckAppId != null and ckAppId != ''">
+		   AND ckAppId= ${ckAppId}
+		 </if>
+		 <if test="begTime != null and begTime != ''">
+		   AND createDate <![CDATA[>=]]> '${begTime}'
+		 </if>
+		 <if test="endTime != null and endTime != ''">
+		   AND createDate <![CDATA[< ]]>  '${endTime}'
+		 </if>
+		 <if test="ckChannelId != null and ckChannelId != ''">
+		   AND ckChannelId= ${ckChannelId}
+		 </if>
+		   and type= '10') T
+		 GROUP BY cd) event on sdk.cd= event.cd
+		 order by cd
+	</select>
+	
+	<select id="simpleDemo" resultType="map">
+		select sdk.cd as cd,
+			   sdk.ct as ct_role,
+			   event.ct as ct_event,
+			   event.ct/sdk.ct as ratio
+		  from(
+		SELECT cd, count(1) AS ct
+		  FROM(
+		SELECT ckAppId, ckChannelId, date_format(createDate, '%Y%m%d') AS cd
+		  FROM sdk_user_role
+		 WHERE 1=1
+		 <if test="ckAppId != null and ckAppId != ''">
+		   AND ckAppId= ${ckAppId}
+		 </if>
+		 <if test="begTime != null and begTime != ''">
+		   AND createDate <![CDATA[>=]]> '${begTime}'
+		 </if>
+		 <if test="endTime != null and endTime != ''">
+		   AND createDate <![CDATA[< ]]>  '${endTime}'
+		 </if>
+		 <if test="ckChannelId != null and ckChannelId != ''">
+		   AND ckChannelId= ${ckChannelId}
+		 </if>
+		   ) T
+		 GROUP BY cd) sdk
+		  left join(
+		SELECT cd, count(1) AS ct
+		  FROM(
+		SELECT ckAppId, ckChannelId, date_format(createDate, '%Y%m%d') AS cd
+		  FROM event_user_role
+		 WHERE 1=1
+		 <if test="ckAppId != null and ckAppId != ''">
+		   AND ckAppId= ${ckAppId}
+		 </if>
+		 <if test="begTime != null and begTime != ''">
+		   AND createDate <![CDATA[>=]]> '${begTime}'
+		 </if>
+		 <if test="endTime != null and endTime != ''">
+		   AND createDate <![CDATA[< ]]>  '${endTime}'
+		 </if>
+		 <if test="ckChannelId != null and ckChannelId != ''">
+		   AND ckChannelId= ${ckChannelId}
+		 </if>
+		   and type= '10') T
+		 GROUP BY cd) event on sdk.cd= event.cd
+		 order by cd
+	</select>
+
+	
+	<select id="statErrorCount" resultType="me.ckhd.opengame.stats.web.StatErrorController$CountResult">
+		select occur_date as occurDate,
+			   error_class_name as errorClassName,
+			   error_line_number as errorLineNumber,
+			   exception_class_name as exceptionClassName,
+			   count(1) as total
+		  from app_error_log
+		 <where>
+			 <if test="ckAppId != null and ckAppId != ''">
+			   AND ck_app_id= ${ckAppId}
+			 </if>
+			 <if test="ckChannelId != null and ckChannelId != ''">
+			   AND channel_id= ${ckChannelId}
+			 </if>
+			 <if test="begDate != null and begDate != ''">
+			   AND occur_date <![CDATA[>=]]> ${begDate}
+			 </if>
+			 <if test="endDate != null and endDate != ''">
+			   AND occur_date <![CDATA[<=]]> ${endDate}
+			 </if>
+		 </where>
+		group by occur_date,
+				 error_class_name,
+				 error_line_number,
+				 exception_class_name
+		order by occur_date
+	</select>
+	<select id="statErrorList" resultType="me.ckhd.opengame.app.entity.AppErrorLog">
+		select *
+		  from app_error_log
+		  <where>
+			 <if test="ckAppId != null and ckAppId != ''">
+			   AND ck_app_id= ${ckAppId}
+			 </if>
+			 <if test="ckChannelId != null and ckChannelId != ''">
+			   AND channel_id= ${ckChannelId}
+			 </if>
+			 <if test="begDate != null and begDate != ''">
+			   AND occur_date <![CDATA[>=]]> ${begDate}
+			 </if>
+			 <if test="endDate != null and endDate != ''">
+			   AND occur_date <![CDATA[<=]]> ${endDate}
+			 </if>
+			 <if test="errorClassName != null and errorClassName != ''">
+			   AND error_class_name = '${errorClassName}'
+			 </if>
+			 <if test="errorLineNumber != null and errorLineNumber != ''">
+			   AND error_line_number = ${errorLineNumber}
+			 </if>
+			 <if test="exceptionClassName != null and exceptionClassName != ''">
+			   AND exception_class_name = '${exceptionClassName}'
+			 </if>
+		  </where>
+		order by occur_date
+	</select>
+
+</mapper>

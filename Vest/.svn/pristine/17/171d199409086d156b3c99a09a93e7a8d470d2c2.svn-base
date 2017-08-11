@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.buyflow.dao.BuyFlowTotalIncomeStatsDao">
+
+	<select id="queryTotalIncome" resultType="java.util.HashMap">
+        SELECT
+            <if test="statsDate == -1">
+                CONCAT(ckapp_id, '_', child_ckapp_id, '_', media, '_', ad_item) AS `key`,
+            </if>
+             <if test="group == 1">
+                CONCAT(ckapp_id, '_', child_ckapp_id, '_', media, '_', ad_item, '_',stats_date) AS `key`,
+            </if>
+        sum(CASE WHEN days = 0 THEN income ELSE 0 END) as totalIncome0,
+        sum(CASE WHEN days <![CDATA[<=]]> 1 THEN income ELSE 0 END) as totalIncome1,
+        sum(CASE WHEN days <![CDATA[<=]]> 7 THEN income ELSE 0 END) as totalIncome7,
+        sum(CASE WHEN days <![CDATA[<=]]> 30 THEN income ELSE 0 END) as totalIncome30,
+        sum(CASE WHEN days <![CDATA[<=]]> 60 THEN income ELSE 0 END) as totalIncome60
+        FROM buy_flow_total_income_stats
+        WHERE stats_date >= #{startDate} AND stats_date <![CDATA[<=]]> #{endDate}
+         group by
+        ckapp_id,child_ckapp_id,media,ad_item
+        <if test="statsDate != -1">
+	        ,stats_date;
+        </if>
+       
+	</select>
+	
+	<!-- 查询日期范围总充值金额   总充值设备数 -->
+	<select id="queryTotalData" resultType="java.util.HashMap">
+	     select 
+	       <choose>
+	           <when test="statsDate == -1">
+	                <if test="group == 0">
+                        CONCAT(a.media_id) as 'key',
+                    </if>
+                     <if test="group == 1">
+                        CONCAT(a.name) as 'key',
+                    </if>
+	           </when>
+	           <otherwise>
+			       <if test="group == 0">
+		                CONCAT(b.stats_date,'_',a.media_id) as 'key',
+		            </if>
+		             <if test="group == 1">
+		                CONCAT(b.stats_date,'_',a.name) as 'key',
+		            </if>
+	           </otherwise>
+	       </choose>
+            SUM(b.income) as totalIncome,
+            SUM(b.device_num) as totalDevice
+            from buy_flow_activity a
+				JOIN buy_flow_total_income_stats b ON a.ckapp_id = b.ckapp_id
+					AND a.child_ckapp_id = b.child_ckapp_id
+					AND a.media_id = b.media
+					AND a.ad_item = b.ad_item
+        where a.del_flag = '0' 
+        and b.stats_date >= #{startDate}
+        and b.stats_date <![CDATA[<=]]> #{endDate}
+           GROUP BY 
+                <if test="statsDate != -1">
+	                b.stats_date,
+                </if>
+	            <if test="group == 0">
+	                a.media_id
+	            </if>
+	            <if test="group == 1">
+	                a.name
+	            </if>
+    </select>
+    
+    <!-- 查询日期范围内  60日留存充值数  新增设备当日充值金额    新增设备当日充值数量 -->
+    <select id="queryIncomeData" resultType="java.util.HashMap">
+         select 
+           <choose>
+               <when test="statsDate == -1">
+                    <if test="group == 0">
+                        CONCAT(a.media_id) as 'key',
+                    </if>
+                     <if test="group == 1">
+                        CONCAT(a.name) as 'key',
+                    </if>
+               </when>
+               <otherwise>
+                   <if test="group == 0">
+                        CONCAT(c.stats_date,'_',a.media_id) as 'key',
+                    </if>
+                     <if test="group == 1">
+                        CONCAT(c.stats_date,'_',a.name) as 'key',
+                    </if>
+               </otherwise>
+           </choose>
+            SUM(if(c.days <![CDATA[<=]]> 60,c.income,0)) as retainTotalIncome,
+            SUM(if(c.days = 0,c.income,0)) as retainIncome,
+            SUM(if(c.days = 0,c.device_num,0)) as payDevice
+            from buy_flow_activity a
+                JOIN buy_flow_retain_income_stats c ON a.ckapp_id = c.ckapp_id
+                    AND a.child_ckapp_id = c.child_ckapp_id
+                    AND a.media_id = c.media
+                    AND a.ad_item = c.ad_item
+        where a.del_flag = '0' 
+        and c.stats_date >= #{startDate}
+        and c.stats_date <![CDATA[<=]]> #{endDate}
+           GROUP BY 
+                <if test="statsDate != -1">
+                    c.stats_date,
+                </if>
+                <if test="group == 0">
+                    a.media_id
+                </if>
+                <if test="group == 1">
+                    a.name
+                </if>
+    </select>
+	
+</mapper>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.buyflow.dao.BuyFlowDao">
+
+	<insert id="insert">
+		INSERT INTO buy_flow(
+		id,
+		ckapp_id,
+		child_ckapp_id,
+		ad_item,
+		media,
+		device_id,
+		MD5_device_id,
+		ip,
+		monitor_time,
+		callback,
+		state,
+		create_date,
+		update_date,
+		remarks,
+		del_flag
+		) VALUES (
+		#{id},
+		#{ckAppId},
+        #{childCkAppId},
+        #{adItem},
+        #{media},
+        #{deviceId},
+        #{MD5DeviceId},
+        #{ip},
+        #{monitorTime},
+        #{callback},
+        #{state},
+		#{createDate},
+		#{updateDate},
+		null,
+		#{delFlag}
+		)
+	</insert>
+
+	<select id="existBuyFlow" resultType="java.lang.Integer">
+		SELECT count(0) FROM buy_flow
+		where ckapp_id=#{ckAppId} and child_ckapp_id=#{childCkAppId} and
+		device_id=#{deviceId} and state=2
+	</select>
+
+    <select id="queryBuyFlow24H" resultType="BuyFlow">
+        select * from(
+        SELECT id, ckapp_id as ckAppId, child_ckapp_id as childCkAppId, ad_item, media, device_id, ip, monitor_time, callback, state, create_date, update_date, remarks, del_flag
+          FROM buy_flow
+         where ckapp_id= #{ckAppId}
+           and child_ckapp_id= #{childCkAppId}
+           and device_id= #{deviceId}
+           and state= #{state}
+           and TIMESTAMPDIFF(SECOND, create_date, now()) &lt;= 86400
+         union all
+        SELECT id, ckapp_id as ckAppId, child_ckapp_id as childCkAppId, ad_item, media, device_id, ip, monitor_time, callback, state, create_date, update_date, remarks, del_flag
+          FROM buy_flow
+         where ckapp_id= #{ckAppId}
+           and child_ckapp_id= #{childCkAppId}
+           and MD5_device_id= #{MD5DeviceId}
+           and state= #{state}
+           and TIMESTAMPDIFF(SECOND, create_date, now()) &lt;= 86400) T
+         order by create_date DESC
+         limit 0, 1
+    </select>
+    
+    <update id="updateState">
+        update buy_flow set state=#{state},device_id=#{deviceId},update_date=#{updateDate} where id=#{id};
+    </update>
+</mapper>

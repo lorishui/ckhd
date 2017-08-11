@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.stats.dao.EventUserAccountDao">
+	
+	<!-- 插入用户 -->
+	<insert id="insert">
+		INSERT INTO event_user_account(
+			id,
+			ckapp_id,
+			child_appId,
+			channel_id,
+			child_channel_id,
+			platform,
+			os_version,
+			phone_model,
+			package_name,
+			idfv,
+			session_id,
+			user_account,
+			device_id,
+			type ,
+			client_ip ,
+			request_data,
+			response_data,
+			create_time,
+			execute_time
+		) VALUES (
+			#{id},
+			#{ckappId},
+			#{childAppId},
+			#{channelId},
+			#{childChannelId},
+			#{platform},
+			#{osVersion},
+			#{phoneModel},
+			#{packageName},
+			#{idfv},
+			#{sessionId},
+			#{userAccount},
+			#{deviceId},
+			#{type},
+			#{clientIp},
+			#{requestData},
+			#{responseData},
+			#{createDate},
+			#{executeTime}
+		)
+	</insert>
+	
+</mapper>

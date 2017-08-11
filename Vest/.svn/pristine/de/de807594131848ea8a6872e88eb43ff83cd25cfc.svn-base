@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.buyflow.dao.BuyFlowActivityDao">
+
+	<select id="get" resultType="BuyFlowActivity">
+		SELECT
+			a.id as id,
+			a.device_type as deviceType,
+			a.name as name,
+			a.media_id as mediaId,
+			a.ckapp_id as ckappId,
+			child_ckapp_id as childckappId,
+			ad_item as adItem,
+			ad_url as adUrl
+		FROM buy_flow_activity a
+		WHERE a.id = #{id};
+	</select>
+	
+	<select id="isExist" resultType="BuyFlowActivity">
+        SELECT
+            a.id as id,
+            a.device_type as deviceType,
+            a.name as name,
+            a.media_id as mediaId,
+            a.ckapp_id as ckappId,
+            child_ckapp_id as childckappId,
+            ad_item as adItem,
+            ad_url as adUrl
+        FROM buy_flow_activity a
+        WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+        <if test="ckappId != null and ckappId != ''">
+            AND ckapp_id = #{ckappId}
+        </if>
+        <if test="childckappId != null and childckappId != ''">
+            AND child_ckapp_id = #{childckappId}
+        </if>
+        <if test="mediaId != null and mediaId != ''">
+            AND a.media_id = #{mediaId}
+        </if>
+        <if test="adItem != null and adItem != ''">
+            AND a.ad_item = #{adItem}
+        </if>
+    </select>
+
+	<!-- 分页查询Promote信息 -->
+	<select id="findList" resultType="BuyFlowActivity">
+		SELECT
+			a.id as id,
+			a.device_type as deviceType,
+			a.name as name,
+			a.media_id as mediaId,
+			a.ckapp_id as ckappId,
+			a.child_ckapp_id as childckappId,
+			a.ad_item as adItem,
+			a.ad_url as adUrl,
+			a.create_date as createDate
+		FROM buy_flow_activity a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="startDate != null and startDate != ''">
+            AND a.create_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND a.create_date <![CDATA[ <= ]]> #{endDate}
+        </if>
+		<if test="ckappId != null and ckappId != ''">
+			AND ckapp_id = #{ckappId}
+		</if>
+		<if test="childckappId != null and childckappId != ''">
+			AND child_ckapp_id = #{childckappId}
+		</if>
+		<if test="mediaId != null and mediaId != ''">
+			AND a.media_id = #{mediaId}
+		</if>
+		<if test="name != null and name != ''">
+			AND a.name like '${name}%'
+		</if>
+		
+		<if test="permissionCkAppId != null and permissionCkAppId != ''">
+			and ckapp_id in (${permissionCkAppId})
+		</if>
+		<if test="permissionCkAppChildId != null and permissionCkAppChildId.size() > 0">
+			and concat(ckAppId,'_',childCkAppId) in 
+			<foreach collection="permissionCkAppChildId" index="index" item="item" open="(" separator="," close=")">#{item}</foreach> 
+		</if>
+		<if test="permissionMediaId != null and permissionMediaId != ''">
+			and a.media_id in 
+			<foreach collection="permissionMediaId" index="index" item="media" open="(" separator="," close=")">
+				#{media}
+			</foreach> 
+		</if>
+
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getActivityList" resultType="java.util.HashMap">
+        SELECT
+           name
+        FROM buy_flow_activity
+        where del_flag = '0'
+    </select>
+
+	<!-- 插入adEvent -->
+	<insert id="insert">
+		INSERT INTO buy_flow_activity(
+			id,
+			device_type,
+			name,
+			media_id,
+			ckapp_id,
+			child_ckapp_id,
+			ad_item,
+			ad_url,
+			create_date,
+			create_by,
+			update_date,
+			update_by,
+			del_flag
+		) VALUES (
+			#{id},
+			#{deviceType},
+			#{name},
+			#{mediaId},
+			#{ckappId},
+			#{childckappId},
+			#{adItem},
+			#{adUrl},
+			#{createDate},
+			#{createBy.id},
+			#{updateDate},
+			#{updateBy.id},
+			#{delFlag}
+		)
+	</insert>
+	<!-- 更新APP信息 -->
+	<update id="update">
+		UPDATE buy_flow_activity SET
+		    device_type = #{deviceType},
+			name = #{name},
+			media_id = #{mediaId},
+			ckapp_id = #{ckappId},
+			child_ckapp_id = #{childckappId},
+			ad_item = #{adItem},
+			ad_url = #{adUrl},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 逻辑删除APP -->
+	<update id="delete">
+		UPDATE buy_flow_activity SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+</mapper>

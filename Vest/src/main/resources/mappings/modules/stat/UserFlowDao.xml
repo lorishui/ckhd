@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.stats.dao.UserFlowDao">
+	
+	<select id="getCountByChannel" resultType="UserFlow">
+		SELECT 
+		  a.ckAppId,
+		  a.childCkAppId,
+		  b.ckchannelId AS fromChannel,
+  		  a.channelId AS toChannel,
+		  COUNT(0) AS num,
+		  sum(a.actualAmount) AS totalMoney
+		FROM app_online_pay a 
+		LEFT JOIN app_device_info b ON (
+		      a.ckAppId = a.ckAppId 
+		      AND a.deviceId = b.deviceId 
+		      AND a.channelId <![CDATA[<>]]> b.ckChannelId
+		    ) 
+		WHERE a.create_date BETWEEN #{startTime} AND #{endTime}
+		 <if test="ckAppId != null and ckAppId != ''">
+		  AND a.ckAppId = #{ckAppId} 
+		  AND b.ckAppId = #{ckAppId} 
+		 </if> 
+
+		<if test="permissionCkAppId != null and permissionCkAppId != ''">
+			and a.ckAppId in (${permissionCkAppId})
+		</if>
+		<if test="permissionCkAppChildId != null and permissionCkAppChildId.size() > 0">
+			and concat(a.ckAppId,'_',a.childCkAppId) in 
+			<foreach collection="permissionCkAppChildId" index="index" item="item" open="(" separator="," close=")">#{item}</foreach> 
+		</if>
+		<if test="permissionChannelId != null and permissionChannelId != ''">
+			AND b.ckChannelId in (${permissionChannelId})
+		</if>
+
+		GROUP BY a.ckAppId,a.childCkAppId,a.channelId 
+	</select>
+	
+</mapper>

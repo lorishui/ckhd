@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.online.dao.MyCardOrderDao">
+
+	<!-- 插入用户 -->
+	<insert id="insert">
+		REPLACE INTO app_online_order_mycard(
+			id,
+			is_test,
+			auth_code,
+			order_id,
+			channel_order_id,
+			mycard_trade_no,
+			status,
+			server_id,
+			customer_id,
+			payment_type,
+			currency,
+			amount,
+			actual_amount,
+			return_code,
+			return_msg,
+			serial_id,
+			create_date,
+			update_date,
+			success_date
+		) VALUES (
+			#{id},
+			#{isTest},
+			#{authCode},
+			#{orderId},
+			#{channelOrderId},
+			#{mycardTradeNo},
+			#{status},
+			#{serverId},
+			#{customerId},
+			#{paymentType},
+			#{currency},
+			#{amount},
+			#{actualAmount},
+			#{returnCode},
+			#{returnMsg},
+			#{serialId},
+			#{createDate},
+			#{updateDate},
+			#{successDate}
+		)
+	</insert>
+	
+	<!-- 更新用户 -->
+	<update id="update">
+		UPDATE app_online_order_mycard SET 
+		<if test="status != null and status != '' ">
+			status = #{status},
+		</if>
+		<if test="channelOrderId != null and channelOrderId != '' ">
+			channel_order_id = #{channelOrderId},
+		</if>
+		<if test="returnCode != null and returnCode != '' ">
+			return_code = #{returnCode},
+		</if>
+		<if test="returnMsg != null and returnMsg != '' ">
+			return_msg = #{returnMsg},
+		</if>
+		<if test="queryCode != null and queryCode != '' ">
+			query_code = #{queryCode},
+		</if>
+		<if test="queryMsg != null and queryMsg != '' ">
+			query_msg = #{queryMsg},
+		</if>
+		<if test="mycardTradeNo != null and mycardTradeNo != '' ">
+			mycard_trade_no = #{mycardTradeNo},
+		</if>
+		<if test="actualAmount != null and actualAmount != '' ">
+			actual_amount = #{actualAmount},
+		</if>
+		<if test="serialId != null and serialId != '' ">
+			serial_id = #{serialId},
+		</if>
+		<if test="successDate != null and successDate != '' ">
+			success_date = #{successDate},
+		</if>
+		update_date=#{updateDate}
+		WHERE id=#{id}
+	</update>
+	
+	<select id="findList" resultType="MyCardOrder">
+		select
+		    id,
+		    is_test,
+            auth_code,
+            order_id,
+            channel_order_id,
+            mycard_trade_no,
+            status,
+            server_id,
+            customer_id,
+            payment_type,
+            currency,
+            amount,
+            actual_amount,
+            return_code,
+            return_msg,
+            serial_id,
+            create_date,
+            update_date,
+            success_date
+		from app_online_order_mycard
+		where 1=1
+		   <if test="status != null and status != '' ">
+                AND status = #{status}
+           </if>
+           <if test="startDateTime != null and startDateTime != '' ">
+                AND success_date >= #{startDateTime}
+           </if>
+           <if test="endDateTime != null and endDateTime != '' ">
+                AND success_date <![CDATA[<=]]> #{endDateTime}
+           </if>
+	</select>
+	
+	<select id="get" resultType="MyCardOrder">
+        select
+            id,
+            is_test,
+            auth_code,
+            order_id,
+            channel_order_id,
+            mycard_trade_no,
+            status,
+            server_id,
+            customer_id,
+            payment_type,
+            currency,
+            amount,
+            actual_amount,
+            return_code,
+            return_msg,
+            serial_id,
+            create_date,
+            update_date,
+            success_date
+        from app_online_order_mycard
+        where 1=1
+           <if test="authCode != null and authCode != '' ">
+                AND auth_code = #{authCode}
+           </if>
+           <if test="orderId != null and orderId != '' ">
+                AND order_id = #{orderId}
+           </if>
+           <if test="mycardTradeNo != null and mycardTradeNo != '' ">
+                AND mycard_trade_no = #{mycardTradeNo}
+           </if>
+    </select>
+</mapper>

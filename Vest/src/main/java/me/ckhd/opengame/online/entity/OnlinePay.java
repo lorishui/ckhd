@@ -1,0 +1,564 @@
+package me.ckhd.opengame.online.entity;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+
+import me.ckhd.opengame.app.entity.APPCk;
+import me.ckhd.opengame.app.entity.PayCodeConfig;
+import me.ckhd.opengame.app.entity.PayInfoConfig;
+import me.ckhd.opengame.common.persistence.DataEntity;
+import me.ckhd.opengame.common.utils.Encodes;
+
+/**
+ * 网游支付接收实体类
+ * 
+ * @author leo
+ *
+ */
+public class OnlinePay  extends  DataEntity<OnlinePay> {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String channelId;//渠道id
+	private String ckAppId;//创酷appid
+	private String childCkAppId;//子游戏标识
+	private String appId; //运营商Id
+	private String version; //版本
+	private String orderId; //订单Id
+	private String orderStatus; //订单状态
+	private String errMsg;
+	private String prepayid; //预付订单
+	private String appPayContent;//客户端访问数据
+	private String channelPayContent;//支付回调数据
+	private String callBackContent;//SDK服务器回调数据
+	private String payType; //支付类型
+	private String extension; //透传参数
+	private String userId; //用户id
+	private int gameOnline; //是否网游:0单机,1网游
+	private String productId; //计费点Id
+	private String productName;//计费点名称
+	private int prices; //金额 单位:分
+	private String startDate;//开始日期
+	private String endDate;//结束日期
+	private String actualAmount; //实际支付金额
+	private String channelOrderId;//渠道的订单Id
+	private String clientIp;//客户端ip
+	private String callBackUrl;//发货地址
+	private int isTest;//是否是测试数据0:正式,1:测试
+	private Integer isTotal;//是否是总统计
+	private String notifyUrl;//回调地址
+	private HttpServletRequest httpServletRequest;//callbackRequest
+
+	/**
+	 * 订单下发内容
+	 */
+	private String content;
+	/**
+	 * 已经转发CP次数 default 1   7次后不再转发
+	 */
+	private Integer sendNum; 
+	/**
+	 * 订单下发状态
+	 */
+	private String sendStatus;
+	/**
+	 * 订单下发失败原因
+	 */
+	private String sendErrMsg;
+	
+	//非数据库所需数据,只供程序使用数据
+	private int genOrderId; //订单id
+	
+	private double discount;  //折扣率
+	
+	private APPCk appck; //游戏信息
+	
+	private PayInfoConfig payInfoConfig; //游戏基础信息
+	
+	private PayCodeConfig payCodeConfig; //游戏计费点信息
+	
+	private Map<String, Object> callBackMap = new HashMap<String, Object>();
+	
+	private String sdkType;//类型.1,网游.2为单机
+	
+	private String accessKey;
+	
+	private String sercetKey;//游戏密钥
+	
+	private String orderIndex; //订单序号
+	
+	private Map<String, Object> payMap = new HashMap<String, Object>();
+	
+	private String payResInfo;//下单是预留的信息
+	
+	//新增数据字段 2017-03-08
+	private String childChannelId;
+	private String roleId;
+	private String zoneId;
+	private String serverId;
+	//新增字段deviceId：adroid:imei ios:idfa
+	private String deviceId;
+	
+	//用于过滤游戏权限
+	private String permissionCkAppId;
+	//用于过滤游戏权限
+	private List<String> permissionCkAppChildId;
+	//用于过滤渠道权限
+	private String permissionChannelId;
+	
+	
+	public String getChannelId() {
+		return channelId;
+	}
+
+	public void setChannelId(String channelId) {
+		this.channelId = channelId;
+	}
+
+	public String getCkAppId() {
+		return ckAppId;
+	}
+
+	public void setCkAppId(String ckAppId) {
+		this.ckAppId = ckAppId;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public String getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(String orderId) {
+		this.orderId = orderId;
+	}
+
+	public String getOrderStatus() {
+		return orderStatus;
+	}
+
+	public void setOrderStatus(String orderStatus) {
+		this.orderStatus = orderStatus;
+	}
+
+	public String getPrepayid() {
+		return prepayid;
+	}
+
+	public void setPrepayid(String prepayid) {
+		this.prepayid = prepayid;
+	}
+
+	public String getAppPayContent() {
+		return appPayContent;
+	}
+
+	public void setAppPayContent(String appPayContent) {
+		this.appPayContent = appPayContent;
+	}
+
+	public String getChannelPayContent() {
+		return channelPayContent;
+	}
+
+	public void setChannelPayContent(String channelPayContent) {
+		this.channelPayContent = channelPayContent;
+	}
+
+	public String getCallBackContent() {
+		return callBackContent;
+	}
+
+	public void setCallBackContent(String callBackContent) {
+		this.callBackContent = callBackContent;
+	}
+
+	public String getPayType() {
+		return payType;
+	}
+
+	public void setPayType(String payType) {
+		this.payType = payType;
+	}
+	
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public String getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(String startDate) {
+		this.startDate = startDate;
+	}
+
+	public String getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(String endDate) {
+		this.endDate = endDate;
+	}
+
+	public Map<String,Object> getSenderMap(){
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("orderId", getOrderId());
+		map.put("uid", getUserId());
+		map.put("prices", getActualAmount());
+		map.put("productId", getProductId());
+		map.put("productName", getProductName());
+		map.put("channelId", getChannelId());
+		map.put("gameId", getCkAppId());
+		map.put("create_time", getCreateDate().getTime());
+		map.put("attach", getExtension());
+		if( 1 == getIsTest() ){
+			map.put("isTest", 1);
+		}
+		if(StringUtils.isNotBlank(getSercetKey())){
+			map.put("sign", Encodes.string2MD5(getSercetStr()));
+		}
+		return map;
+	}
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String appId) {
+		this.appId = appId;
+	}
+
+	public String getExtension() {
+		return extension;
+	}
+
+	public void setExtension(String extension) {
+		this.extension = extension;
+	}
+
+	public int getGameOnline() {
+		return gameOnline;
+	}
+
+	public void setGameOnline(int gameOnline) {
+		this.gameOnline = gameOnline;
+	}
+
+	public int getPrices() {
+		return prices;
+	}
+
+	public void setPrices(int prices) {
+		this.prices = prices;
+	}
+
+	public String getActualAmount() {
+		return actualAmount;
+	}
+
+	public void setActualAmount(String actualAmount) {
+		this.actualAmount = actualAmount;
+	}
+
+	public String getProductId() {
+		return productId;
+	}
+
+	public void setProductId(String productId) {
+		this.productId = productId;
+	}
+
+	public String getProductName() {
+		return productName;
+	}
+
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
+
+	public String getChannelOrderId() {
+		return channelOrderId;
+	}
+
+	public void setChannelOrderId(String channelOrderId) {
+		this.channelOrderId = channelOrderId;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public Integer getSendNum() {
+		return sendNum;
+	}
+
+	public void setSendNum(Integer sendNum) {
+		this.sendNum = sendNum;
+	}
+
+	public String getErrMsg() {
+		return errMsg;
+	}
+
+	public void setErrMsg(String errMsg) {
+		this.errMsg = errMsg;
+	}
+
+	public double getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(double discount) {
+		this.discount = discount;
+	}
+
+	public APPCk getAppck() {
+		return appck;
+	}
+
+	public void setAppck(APPCk appck) {
+		this.appck = appck;
+	}
+
+	public PayInfoConfig getPayInfoConfig() {
+		return payInfoConfig;
+	}
+
+	public void setPayInfoConfig(PayInfoConfig payInfoConfig) {
+		this.payInfoConfig = payInfoConfig;
+	}
+
+	public PayCodeConfig getPayCodeConfig() {
+		return payCodeConfig;
+	}
+
+	public void setPayCodeConfig(PayCodeConfig payCodeConfig) {
+		this.payCodeConfig = payCodeConfig;
+	}
+
+	public int getGenOrderId() {
+		return genOrderId;
+	}
+
+	public void setGenOrderId(int genOrderId) {
+		this.genOrderId = genOrderId;
+	}
+
+	public Map<String, Object> getCallBackMap() {
+		return callBackMap;
+	}
+
+	public void setCallBackMap(Map<String, Object> callBackMap) {
+		this.callBackMap = callBackMap;
+	}
+
+	public String getSendStatus() {
+		return sendStatus;
+	}
+
+	public void setSendStatus(String sendStatus) {
+		this.sendStatus = sendStatus;
+	}
+
+	public String getSendErrMsg() {
+		return sendErrMsg;
+	}
+
+	public void setSendErrMsg(String sendErrMsg) {
+		this.sendErrMsg = sendErrMsg;
+	}
+
+	public String getSdkType() {
+		return sdkType;
+	}
+
+	public void setSdkType(String sdkType) {
+		this.sdkType = sdkType;
+	}
+
+	public String getAccessKey() {
+		return accessKey;
+	}
+
+	public void setAccessKey(String accessKey) {
+		this.accessKey = accessKey;
+	}
+
+	public String getSercetKey() {
+		return sercetKey;
+	}
+
+	public void setSercetKey(String sercetKey) {
+		this.sercetKey = sercetKey;
+	}
+
+	public String getSercetStr() {
+		String temp = "%s%s%s%s%s%s";
+		return String.format(temp,getUserId(),getChannelId(),getCkAppId(),getOrderId(),getProductId(),getSercetKey());
+	}
+	
+	public String getOrderIndex() {
+		return orderIndex;
+	}
+
+	public void setOrderIndex(String orderIndex) {
+		this.orderIndex = orderIndex;
+	}
+
+	public HttpServletRequest getHttpServletRequest() {
+		return httpServletRequest;
+	}
+
+	public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
+		this.httpServletRequest = httpServletRequest;
+	}
+
+	public String getClientIp() {
+		return clientIp;
+	}
+
+	public void setClientIp(String clientIp) {
+		this.clientIp = clientIp;
+	}
+
+	public Map<String, Object> getPayMap() {
+		return payMap;
+	}
+
+	public void setPayMap(Map<String, Object> payMap) {
+		this.payMap = payMap;
+	}
+
+	public String getPayResInfo() {
+		return payResInfo;
+	}
+
+	public void setPayResInfo(String payResInfo) {
+		this.payResInfo = payResInfo;
+	}
+
+	public String getCallBackUrl() {
+		return callBackUrl;
+	}
+
+	public void setCallBackUrl(String callBackUrl) {
+		this.callBackUrl = callBackUrl;
+	}
+
+	public int getIsTest() {
+		return isTest;
+	}
+
+	public void setIsTest(int isTest) {
+		this.isTest = isTest;
+	}
+
+	public Integer getIsTotal() {
+		return isTotal;
+	}
+
+	public void setIsTotal(Integer isTotal) {
+		this.isTotal = isTotal;
+	}
+
+	public String getChildCkAppId() {
+		return childCkAppId;
+	}
+
+	public void setChildCkAppId(String childCkAppId) {
+		this.childCkAppId = childCkAppId;
+	}
+
+	public String getChildChannelId() {
+		return childChannelId;
+	}
+
+	public void setChildChannelId(String childChannelId) {
+		this.childChannelId = childChannelId;
+	}
+
+	public String getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(String roleId) {
+		this.roleId = roleId;
+	}
+
+	public String getZoneId() {
+		return zoneId;
+	}
+
+	public void setZoneId(String zoneId) {
+		this.zoneId = zoneId;
+	}
+
+	public String getServerId() {
+		return serverId;
+	}
+
+	public void setServerId(String serverId) {
+		this.serverId = serverId;
+	}
+
+	public String getNotifyUrl() {
+		return notifyUrl;
+	}
+
+	public void setNotifyUrl(String notifyUrl) {
+		this.notifyUrl = notifyUrl;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
+
+	public String getPermissionCkAppId() {
+		return permissionCkAppId;
+	}
+
+	public void setPermissionCkAppId(String permissionCkAppId) {
+		this.permissionCkAppId = permissionCkAppId;
+	}
+
+	public List<String> getPermissionCkAppChildId() {
+		return permissionCkAppChildId;
+	}
+
+	public void setPermissionCkAppChildId(List<String> permissionCkAppChildId) {
+		this.permissionCkAppChildId = permissionCkAppChildId;
+	}
+
+	public String getPermissionChannelId() {
+		return permissionChannelId;
+	}
+
+	public void setPermissionChannelId(String permissionChannelId) {
+		this.permissionChannelId = permissionChannelId;
+	}
+}

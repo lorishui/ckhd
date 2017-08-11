@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.app.dao.PayInfoConfigDao">
+	<sql id="payInfoConfigColumns">
+		a.id,
+		a.ckappid,
+		a.childCkAppId,
+		c.name as ckappname,
+		a.carrierappid,
+		a.channelId,
+		b.name as channelName,
+		a.paytype,
+		e.label as payTypeName,
+		a.appid,
+		a.appkey,
+		a.notifyUrl,
+		a.cpServerUrl,
+		a.discount,
+		a.exInfo,
+		a.remarks,
+		a.create_date,
+		a.create_by,
+		a.update_date,
+		a.update_by,
+		a.del_flag
+	</sql>
+
+	<sql id="payInfoConfigJoins">
+		<!-- -->
+		left join channel b on b.id=a.channelId
+		left join app_ck c on (c.ckapp_id = a.ckappid and c.child_id = a.childCkAppId)
+		left join (select * from sys_dict where type='paytype')
+		e on e.value=a.paytype
+	</sql>
+
+	<!-- 分页查询运营商app信息 -->
+	<select id="findList"  resultType="PayInfoConfig">
+		SELECT
+		<include refid="payInfoConfigColumns" />
+		FROM app_online_payinfo a
+		<include refid="payInfoConfigJoins" />
+		WHERE a.del_flag = #{delFlag}
+		<if test="ckAppId != null and ckAppId != ''">
+			AND a.ckappid = #{ckAppId}
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			AND a.childCkAppId = #{childCkAppId}
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND a.channelid = #{channelId}
+		</if>
+		<if test="paytype != null and paytype != ''">
+			AND a.paytype = #{paytype}
+		</if>
+		<if test="appid != null and appid != ''">
+			AND a.appid = #{appid}
+		</if>
+		<if test="appkey != null and appkey != ''">
+			AND a.appkey = #{appkey}
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.ckappid
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- 分页查询运营商app信息 -->
+	<select id="findAllList" resultType="PayInfoConfig">
+		SELECT
+		<include refid="payInfoConfigColumns" />
+		FROM app_online_payinfo a
+		<include refid="payInfoConfigJoins" />
+		WHERE a.del_flag = #{delFlag}
+	</select>
+
+	<!-- 分页查询运营商app信息 -->
+	<select id="get" resultType="PayInfoConfig">
+		SELECT
+		<include refid="payInfoConfigColumns" />
+		FROM app_online_payinfo a
+		<include refid="payInfoConfigJoins" />
+		WHERE a.del_flag = #{delFlag} and a.id=#{id}
+	</select>
+
+	<insert id="insert">
+		INSERT INTO app_online_payinfo(
+		id,
+		ckappid,
+		childCkAppId,
+		channelid,
+		carrierappid,
+		paytype,
+		appid,
+		appkey,
+		notifyUrl,
+		cpserverurl,
+		discount,
+		exInfo,
+		remarks,
+		create_date,
+		create_by
+		) VALUES (
+		#{id},
+		#{ckAppId},
+		#{childCkAppId},
+		#{channelId},
+		#{carrierAppId},
+		#{paytype},
+		#{appid},
+		#{appkey},
+		#{notifyUrl},
+		#{cpServerUrl},
+		#{discount},
+		#{exInfo},
+		#{remarks},
+		#{createDate},
+		#{createBy.id}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE app_online_payinfo
+		SET
+		paytype=#{paytype},
+		appid=#{appid},
+		carrierappid=#{carrierAppId},
+		appkey=#{appkey},
+		notifyUrl=#{notifyUrl},
+		cpserverurl=#{cpServerUrl},
+		discount=#{discount},
+		remarks=#{remarks},
+		exInfo=#{exInfo},
+		update_date=#{updateDate},
+		update_by=#{updateBy.id}
+		WHERE id = #{id}
+	</update>
+	<update id="delete">
+		UPDATE app_online_payinfo
+		SET del_flag = '1'
+		WHERE id =
+		#{id}
+	</update>
+
+	<!-- 检查是否为唯一 -->
+	<select id="checkOnly" resultType="int">
+		SELECT
+		count(*)
+		FROM app_online_payinfo a
+		WHERE a.del_flag = #{delFlag}
+		<if test="ckAppId != null and ckAppId != ''">
+			AND a.ckappid = #{ckAppId}
+		</if>
+		<if test="childCkAppId != null and childCkAppId != ''">
+			AND a.childCkAppId = #{childCkAppId}
+		</if>
+		<if test="channelId != null and channelId != ''">
+			AND a.channelid = #{channelId}
+		</if>
+		<if test="paytype != null and paytype != ''">
+			AND a.paytype = #{paytype}
+		</if>
+	</select>
+</mapper>

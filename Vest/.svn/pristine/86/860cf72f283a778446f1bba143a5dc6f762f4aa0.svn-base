@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.buyflow.dao.AdPushDetailDao">
+	<sql id="AdPushColumns">
+
+	</sql>
+
+	<sql id="AdPushJoins">
+		<!-- -->
+	</sql>
+
+	<resultMap type="AdPushDetail" id="getAdPushDetail">
+		<id property="id" column="id" />
+		<result property="userName" column="userName" />
+		<result property="adPlace" column="ad_place" />
+		<result property="adUrl" column="ad_url" />
+		<result property="description" column="description"/>
+		<association property="adPush" javaType="AdPush">
+			<id property="id" column="adPushId" />
+			<result property="appName" column="appName" />
+			<result property="platform" column="platform" />
+			<result property="mediaName" column="mediaName" />
+			<result property="account" column="account" />
+		</association>
+	</resultMap>
+
+	<!-- 根据adPushid获得AdPushDetail -->
+	<select id="findListByAdPushId" resultMap="getAdPushDetail">
+		SELECT
+			c.id as id,
+			c.ad_push_id as adPushId,
+			b.platform,
+			b.media_name as mediaName,
+			b.account,
+			d.name as userName,
+			c.ad_place,
+			c.ad_url,
+			c.description
+		FROM  t_ad_push b 
+			JOIN t_ad_push_detail c ON b.id = c.ad_push_id
+			JOIN sys_user d ON c.user_id = d.id
+		WHERE c.ad_push_id = #{adPushId}
+		<if test="userId != null and userId != ''">
+			AND c.user_id = #{userId}
+		</if>
+			AND c.del_flag = '0';
+	</select>
+
+
+	<select id="get" resultType="AdPushDetail">
+		SELECT
+			c.id as id,
+			c.ad_push_id as adPushId,
+			b.platform,
+			b.media_name as mediaName,
+			b.account,
+			d.name as userName,
+			c.ad_place as adPlace,
+			c.ad_url as adUrl,
+			c.description
+		FROM  t_ad_push b 
+			JOIN t_ad_push_detail c ON b.id = c.ad_push_id
+			JOIN sys_user d ON c.user_id = d.id
+		WHERE c.id = #{id};
+	</select>
+
+	<!-- 分页查询AdPush信息 -->
+	<!-- <select id="findList" resultType="AdPushDetail">
+		SELECT
+		a.id as id,
+		a.app_id as appId,
+		b.name as appName,
+		a.platform as platform,
+		a.media_name as mediaName,
+		a.account as account
+		FROM t_ad_push a JOIN app_ck b ON a.app_id = b.id
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+			AND 
+		<if test="appName != null and appName != ''">
+			AND b.name like CONCAT('%', #{appName}, '%')
+		</if>
+		<if test="platform != null and platform != ''">
+			AND a.platform like CONCAT('%', #{platform}, '%')
+		</if>
+		<if test="mediaName != null and mediaName != ''">
+			AND a.media_name like CONCAT('%', #{mediaName}, '%')
+		</if>
+		<if test="account != null and account != ''">
+			AND a.account like CONCAT('%', #{account}, '%')
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date DESC
+			</otherwise>
+		</choose>
+	</select> -->
+
+
+
+	<!-- 查询全部AdPush -->
+	<!-- <select id="findAllList" resultType="AdPush">
+	SELECT
+	<include refid="AdPushColumns" />
+	FROM t_ad_push a WHERE a.del_flag = #{DEL_FLAG_NORMAL} ORDER BY
+	a.create_time
+	DESC
+</select> -->
+
+
+	<!-- 插入AdPush -->
+	<insert id="insert">
+		INSERT INTO t_ad_push_detail(
+			id,
+			ad_push_id,
+			user_id,
+			ad_place,
+			ad_url,
+			description,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag
+		) VALUES (
+			#{id},
+			#{adPush.id},
+			#{createBy.id},
+			#{adPlace},
+			#{adUrl},
+			#{description},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+	<!-- 更新APP信息 -->
+	<update id="update">
+		UPDATE t_ad_push_detail SET
+		ad_place = #{adPlace},
+		ad_url = #{adUrl},
+		description = #{description},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 逻辑删除APP -->
+	<update id="delete">
+		UPDATE t_ad_push_detail SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<!-- 逻辑删除APP -->
+	<update id="deleteByAdPushId">
+		UPDATE t_ad_push_detail SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE ad_push_id = #{adPushId}
+	</update>
+
+	<!-- <select id="getAllGames" resultType="java.util.HashMap"> SELECT id 
+		as appId, name FROM app_ck WHERE del_flag = '0' </select> -->
+</mapper>

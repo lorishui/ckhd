@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.buyflow.dao.AdPushDao">
+	<sql id="AdPushColumns">
+
+	</sql>
+
+	<sql id="AdPushJoins">
+		<!-- -->
+	</sql>
+
+
+
+	<select id="get" resultType="AdPush">
+		SELECT
+			a.id,
+			a.app_id as appId,
+			a.platform,
+			a.media_name as mediaName,
+			a.account
+		FROM t_ad_push a
+		WHERE a.id = #{id};
+	</select>
+
+	<!-- 分页查询AdPush信息 -->
+	<select id="findList" resultType="AdPush">
+		SELECT
+		a.id as id,
+		a.app_id as appId,
+		a.platform as platform,
+		a.media_name as mediaName,
+		a.account as account
+		FROM t_ad_push a 
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="appName != null and appName != ''">
+			AND b.name like CONCAT('%', #{appName}, '%')
+		</if>
+		<if test="platform != null and platform != ''">
+			AND a.platform like CONCAT('%', #{platform}, '%')
+		</if>
+		<if test="mediaName != null and mediaName != ''">
+			AND a.media_name = #{mediaName}
+		</if>
+		<if test="account != null and account != ''">
+			AND a.account like CONCAT('%', #{account}, '%')
+		</if>
+		
+		<if test="permissionCkAppId != null and permissionCkAppId != ''">
+			and a.app_id in (${permissionCkAppId})
+		</if>
+		<if test="permissionMediaId != null and permissionMediaId != ''">
+			and a.media_name in 
+			<foreach collection="permissionMediaId" index="index" item="media" open="(" separator="," close=")">
+				#{media}
+			</foreach> 
+		</if>
+
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+
+
+	<!-- 查询全部AdPush -->
+	<!-- <select id="findAllList" resultType="AdPush">
+	SELECT
+	<include refid="AdPushColumns" />
+	FROM t_ad_push a WHERE a.del_flag = #{DEL_FLAG_NORMAL} ORDER BY
+	a.create_time
+	DESC
+</select> -->
+
+
+	<!-- 插入AdPush -->
+	<insert id="insert">
+		INSERT INTO t_ad_push(
+			id,
+			app_id,
+			platform,
+			media_name,
+			account,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag
+		) VALUES (
+			#{id},
+			#{appId},
+			#{platform},
+			#{mediaName},
+			#{account},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+	<!-- 更新APP信息 -->
+	<update id="update">
+		UPDATE t_ad_push SET
+		app_id = #{appId},
+		platform = #{platform},
+		media_name = #{mediaName},
+		account = #{account},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 逻辑删除APP -->
+	<update id="delete">
+		UPDATE t_ad_push SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<select id="getAllGames" resultType="java.util.HashMap">
+	 SELECT id 
+		as appId, name FROM app_ck WHERE del_flag = '0' 
+	</select>
+	<select id="getAllMedia" resultType="java.util.HashMap">
+	 SELECT id ,label FROM sys_dict
+	  WHERE del_flag = '0' 
+	  	AND type = 'adPush_media';
+	</select>
+	
+	
+</mapper>

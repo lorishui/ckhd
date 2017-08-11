@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.ckhd.opengame.online.dao.AppDeviceInfoDao">
+
+	<!-- 插入设备 -->
+	<insert id="insert">
+		REPLACE INTO app_device_info(
+			ckAppId,
+			childCkAppId,
+			ckChannelId,
+			childChannelId,
+			deviceId,
+			MD5DeviceId,
+			idfv,
+			createTime
+		) VALUES (
+			#{ckAppId},
+			#{childCkAppId},
+			#{ckChannelId},
+			#{childChannelId},
+			#{deviceId},
+			#{MD5DeviceId},
+			#{idfv},
+			#{createTime}
+		)
+	</insert>
+	
+	<!-- 更新设备 -->
+	<update id="update">
+		UPDATE app_device_info SET  deviceId=#{deviceId}
+		roleId,serverId,zoneId,source,isAct,actTime
+		<if test="roleId != null and roleId != ''">
+			,roleId = #{roleId}
+		</if>
+		<if test="serverId != null and serverId != '' ">
+			,serverId = #{serverId}
+		</if>
+		<if test="zoneId != null and zoneId != ''">
+			,zoneId = #{zoneId}
+		</if>
+		<if test="source != null and source != ''">
+			,source = #{source}
+		</if>
+		<if test="isAct != 0">
+			,isAct = #{isAct}
+		</if>
+		<if test="actTime != null and actTime != ''">
+			,actTime = #{actTime}
+		</if>
+		WHERE  deviceId= #{deviceId} and ckAppId=#{ckAppId}
+	</update>
+	
+	<update id="updateBuyFlow">
+        UPDATE app_device_info
+        SET media=#{media}, ad_item=#{adItem}
+        WHERE deviceId= #{deviceId} and ckAppId=#{ckAppId}
+    </update>
+    
+	<select id="isExist" resultType="Integer">
+		SELECT COUNT(0) num FROM app_device_info WHERE ckAppId=#{ckAppId} AND deviceId= #{deviceId}
+	</select>
+	
+</mapper>
